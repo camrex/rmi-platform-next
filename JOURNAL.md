@@ -79,3 +79,47 @@ repos with a read-only token and writes only here, with a deploy key. First task
 - Catalog redesign is critical path: separates identifiers from names, adds traceability, JSON-per-part. 569 identifier rows contributed day one; 27 SBIS rows resolvable now.
 - SBIS integration architecturally clear (proposals not writes; identifiers table; instance evidence fields; dropped uniqueness).
 - Pipeline has known technical limits (raster, vision accuracy, stub counting) and open design questions (assembly granularity, GIS mapping, second railroad).
+
+## 2026-10-01 0.3 — done
+
+**Task**: Inventory `rmigis-agp-toolbox`: the YAML schema definitions, every feature class and field, topology rules, Survey123 forms, how the toolbox applies them.
+
+**What I did**:
+1. Read MISSION.md, AGENTS.md, PLAN.md, and last JOURNAL entries to contextualize.
+2. Explored rmigis-agp-toolbox repository structure: one ArcGIS Pro Python Toolbox entry point, 23 tools, 27 shared utilities, 3-domain YAML schema bundles (track improvement, real property, building & site).
+3. Studied YAML schema organization: directory-based per-domain with `_shared.yaml` metadata + individual feature class YAML files. 35 FCs total across three domains.
+4. Analyzed Track Improvement schemas: 21 feature classes (points, lines, polygons, tables) for railroad corridor inventory. Field catalog with 400+ fields, template inheritance, 27 coded-value and range domains. Topology design (suspended, rank-based, per-FC YAML metadata).
+5. Examined Real Property and Building & Site schemas: 11 + 3 FCs respectively, with field inheritance patterns and domain controls.
+6. Traced schema loading (`utils/schema_yaml.py`): directory or single-file source, field template resolution with inheritance chains, type canonicalization, validation output.
+7. Studied FC creation orchestration (`utils/fc_orchestrator.py`): 4-stage pipeline (load schema, prepare domains, plan actions, create FGDB, copy to EGDB, cleanup).
+8. Reviewed domain sync (`utils/domains_io.py`): safe additive-by-default sync with dry-run, never removes codes without explicit flag.
+9. Examined service auditing and in-place field updates (`utils/service_audit.py`, `tools/apply_schema_fields_tool.py`): read-only portal comparison, field additions/removals with backup.
+10. Checked for Survey123: none found in rmigis-agp-toolbox; MISSION.md notes Survey123 is in rmi-platform CIV module for OID virtual inspection.
+11. Read EGDB_UPDATE_WORKFLOW.md (phase guidance, recent breaking changes in xing_inv_pt), TRACK_IMPR_TOPOLOGY_IMPLEMENTATION_PLAN.md (suspended but complete design), YAML_TOOLBOX_MIGRATION_PLAN.md (arcgispro-yaml-pyt modernization).
+
+**Result**: Created `docs/inventory/gis-schemas.md` (~800 lines) covering:
+- Overview: YAML-driven ArcGIS Pro toolbox, 35 FCs across three domains, 400+ field definitions, 27 domain definitions.
+- Schema structure: directory-based per-domain with `_shared.yaml` + per-FC YAML. Track Improvement (21 FCs, 400+ fields, 27 domains), Real Property (11 FCs, 120+ fields), Building & Site (3 FCs, 50+ fields each).
+- Field definitions: inheritance from templates (id_base, yes_no_base, mp_base, year_base, etc.), per-FC field catalogs, relationship fields, inspection fields, flexible attributes, editor tracking.
+- Domain definitions: 27 coded-value and range domains across track types, weights, frog sizes, inspection ratings, detector types, tank sizes, generators, etc.
+- Topology design: per-FC YAML metadata (include, rank, rules), rank-based (1=authoritative, 4=refinement), baseline rules (Must Not Self-Overlap, Must Be Covered By, Must Not Have Dangles), suspended pending ArcGIS compatibility.
+- Survey123: none in toolbox; lives in rmi-platform CIV module for OID virtual inspection.
+- How applied: schema loading (directory or single-file, inheritance resolution, validation), FC creation orchestration (4-stage pipeline FGDB→EGDB), domain sync (additive, dry-run capable), service auditing (case-insensitive field comparison, severity grading), in-place field updates (backup, service stop/restart, domain values sync).
+- Configuration: `config/settings.yaml` paths, defaults, schema locations, Portal/server URLs.
+- Known issues: xing_inv_pt (13 fields removed, data loss risk), recent field additions and renames, domain changes (new rail_grade, pnt_type; modified bglw_use, bglw_size, xing_config).
+- Future work: migrate to arcgispro-yaml-pyt framework for better testability and dev ergonomics.
+- File paths: all tools, utilities, templates, domains, field catalogs, layer files, reference data, maintenance scripts, documentation.
+
+**What I found**:
+- YAML schemas are mature and well-structured: directory organization allows per-FC updates without whole-file manipulation; template inheritance reduces duplication; domains are explicitly defined and validated.
+- Toolbox is operationally sound: safe defaults (additive, dry-run capable), comprehensive logging, multi-stage pipeline with rollback-friendly backups, service integration tested.
+- Topology framework is complete but disabled: design is sound (per-FC YAML metadata, rank-based authority, baseline rules defined), implementation code preserved, just waiting for ArcGIS Pro compatibility fix.
+- No Survey123 in toolbox: consistent with MISSION.md; CIV module owns it for OID virtual inspection.
+- Recent maintenance activity (xing_inv_pt restructure, new domains, field renames) shows schemas are actively evolving; breaking changes are documented and phased via EGDB_UPDATE_WORKFLOW.md.
+- Modernization planned but blocked: arcgispro-yaml-pyt framework design complete, but migration is future work.
+
+**Next run should know**:
+- Task 0.3 complete; gis-schemas.md comprehensive with file paths, field/domain counts, topology design, tool workflows.
+- Schema design is sound and operationally mature; no blockers for MISSION's "better GIS schemas" objective beyond what's already in the pipeline (topology re-enablement, potential arcgispro-yaml-pyt migration).
+- Ready for task 0.4 (rmigis-pyt and rmi-imagery-tiling inventory) and 0.5 (GIS schema review / optimization analysis).
+- Survey123 is a red herring for this inventory; belongs in platform, not toolbox.
