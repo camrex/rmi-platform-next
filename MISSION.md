@@ -39,6 +39,55 @@ every run. It changes only when the operator changes it.
 If you conclude one of these is wrong, say so in the architecture proposal with the evidence.
 Do not quietly design around it.
 
+## Operator direction, 2026-09-29 evening (after the issues digest) — read before 0.7
+
+In his words, lightly trimmed:
+
+> One thing I am thinking as being more modular is an easier ability to add in modules, and
+> its connection into rmi-platform, as well as seams between modules.
+>
+> [rmi-sbis-extract carries] a new catalog system. One idea is that we expand the catalog
+> beyond SBIS and also cover TIVS. This would include having domains for stands, switch
+> machines, derails, etc., with a well defined catalog (to be honest, the possibilities are
+> finite, but that doesn't mean we don't run across something new, so we also need the
+> ability to have an "other" to be added into the system later).
+>
+> The other idea: we are amassing a lot of information, documents, etc., that could become a
+> resource in its own right, which could be separate (a module), that could not only be useful
+> for TIVS, SBIS, etc., but could be its own useful web information hub (most of it pulled from
+> freely available sources, amassed in a single location). This is a separate project, and not
+> an immediate need, but would be useful, even internally: right now I have to remember where
+> to find things.
+
+What this asks of the architecture proposal:
+
+1. **Adding a module is the measure of modularity.** Show concretely what it takes to add a
+   new module: what it declares, how it connects to the core, and how it offers and consumes
+   links and seams to other modules. Make that path short, documented and testable (a module
+   template or checklist a new session can follow). The seams between modules are first-class,
+   typed and versioned, not incidental imports.
+2. **A shared equipment catalog, beyond SBIS.** Treat the catalog from `rmi-sbis-extract`
+   (docs/inventory/rmi-sbis-extract.md) as the seed of a platform-wide catalog that SBIS and
+   TIVS both consume: signal equipment today, and track-side domains such as switch stands,
+   switch machines and derails. Well-defined domains, one canonical entry per real item, all
+   identifier forms kept, and an explicit **"other / unclassified"** path so something new can
+   be recorded now and classified into the catalog later without losing what was recorded.
+   Say where it lives (core service or its own module), how the GIS domains (docs/inventory/
+   gis-schemas.md) and the TIVS asset types map onto it, and what the migration from today's
+   SBIS `equipment_catalog` looks like.
+3. **A reference / knowledge hub, later, as its own module.** Documents and information
+   gathered mostly from freely available sources, in one place, searchable, useful to SBIS and
+   TIVS and possibly on its own. **Do not design it in detail or put it in the build order's
+   early phases.** Make sure the module contract and the linking model would let it plug in
+   later (other modules linking to reference entries; the catalog citing its sources there).
+   Note that the owner has tabled the *project documents* arc (#1298, #601, #1299); this hub is
+   a different thing (reference material, not project records) and is not tabled, only later.
+
+The digest's other questions (rebuild vs evolve, one decision store, GlobalID as the only key,
+typed absence, provenance across seams, related tables vs slots, tabled items, the fee
+estimator, ops) are not yet answered by the operator. Where the proposal takes a position on
+them, mark it as a recommendation for the operator to rule on at the checkpoint.
+
 ## What "better" means here
 
 1. **Modules as plugins.** A small core (auth, config, database, GIS sync, shared UI shell,
