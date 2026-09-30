@@ -6,7 +6,7 @@ run (see `AGENTS.md`) or by the operator.
 
 ## Phase 0 — discovery
 
-- [ ] 0.1 [light] Inventory `rmi-platform`: layout, each module (SBIS, CIV, TIVS, PM), routes, models, migrations, background jobs, how modules share code today, the GIS sync, tests, deploy. Cite paths. -> docs/inventory/rmi-platform.md
+- [x] 0.1 [light] Inventory `rmi-platform`: layout, each module (SBIS, CIV, TIVS, PM), routes, models, migrations, background jobs, how modules share code today, the GIS sync, tests, deploy. Cite paths. -> docs/inventory/rmi-platform.md
 - [ ] 0.2 [light] Inventory `rmi-sbis-extract`: what the extraction pipeline does end to end, the part catalog's structure, what it produces, what SBIS could consume from it. -> docs/inventory/rmi-sbis-extract.md
 - [ ] 0.3 [light] Inventory `rmigis-agp-toolbox`: the YAML schema definitions, every feature class and field, topology rules, Survey123 forms, how the toolbox applies them. -> docs/inventory/gis-schemas.md
 - [ ] 0.4 [light] Inventory `rmigis-pyt` and `rmi-imagery-tiling`: what each does and what the platform uses or could use. -> docs/inventory/gis-tools-and-tiling.md
