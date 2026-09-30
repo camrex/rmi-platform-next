@@ -158,3 +158,20 @@ repos with a read-only token and writes only here, with a deploy key. First task
 - rmi-imagery-tiling fully deployed, proven at 164K frames, live event trigger, nearly zero ops cost ongoing.
 - Both repos have extraction value (schema lib, async patterns, contract design) for future platform features.
 - Ready for task 0.5 (GIS schema review / optimization) and 0.6 (seams analysis across all discovered repos).
+
+## 2026-09-30 0.4b — done
+Wrote `docs/inventory/rmi-platform-issues.md` (unbuilt features by module, decisions settled in
+threads but not in ADRs, recurring bugs/weak seams, 14 rebuild implications, open owner questions).
+
+**How thorough**: read the problem/decision parts of every open issue (heads and owner comments,
+not every measurement table); #1236 (405 KB rolling handoff) only skimmed; ~40 closed issues opened
+from index titles. Cross-checked against ADR text by grep and `docs/planning/OWNER_RULINGS.md`.
+
+**Found**: most thread decisions live in OWNER_RULINGS.md (a second decision store). Biggest weak
+seams: three identity keys (GlobalID/OBJECTID/Asset ID); "absent vs undecided vs excluded vs failed"
+collapsed into silence; SBIS→TIVS seam loses price provenance; numbered slot columns; Python-string
+CSS/JS/URLs; CI asyncpg loop flake (root cause never found — first diagnosis was wrong).
+Tabled by the owner, so do not design around them: documents (#1298/#601/#1299), valuation year (#950).
+
+**Next run should know**: the write-back design (#866 slices) and the GIS schema asks (#1042, #1026,
+#896, #746, #747, #729) feed task 0.5; the seam findings feed 0.6 and the architecture proposal.
