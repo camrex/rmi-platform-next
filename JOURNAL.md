@@ -183,3 +183,21 @@ Runner: ended without finishing (exit 1), attempt 1 of 3.
 ```
 Connection error.
 ```
+
+## 2026-09-30 0.5 — done
+Wrote `docs/inventory/gis-schema-review.md`: ten ranked proposals, each tagged P (platform/sync side),
+T (template repo) or O (optional ask to the schema owner); none needs a Portal change.
+
+**Found** (from `~/sources/rmigis-pyt/templates`, the newer repo, counted from YAML; not compared to live layers):
+~13% of trk field slots are numbered-slot columns (turnout_cx 76 of 159, xing 36, wayside ontrk 26);
+the same ~35 envelope fields are repeated in every FC and hand-transcribed again in TIVS `envelope.py`;
+`rel_*` links (61 fields) hold asset IDs with no relationship class; yes/no, rating and year domains are
+triplicated; only 3 RANGE domains exist; lat/long is bound to a rule on only 2 FCs (#1042).
+The older `rmigis-agp-toolbox` has defects already fixed in pyt (YAML `OFF` boolean, `[C Confirmed]`,
+`assoc_blgw_cnt` typo, unresolved-name check now raises), so the review uses pyt.
+Top ranks: (1) normalise slot groups into child rows on sync, (2) declare the envelope once and take it
+from the live `FieldInfo`, (3) treat stored `has_*`/`_cnt` as untrusted, (4) resolve `rel_*` to GlobalID edges.
+
+**Next run should know**: counts of `has_*`/`_cnt`/slot fields are by name regex; Survey123 use of fields
+and live-layer drift were not checked. Feeds 0.6 (seams) and the architecture proposal (per-dataset
+contract: key, envelope, slot_groups, links, expectations, grammar).
