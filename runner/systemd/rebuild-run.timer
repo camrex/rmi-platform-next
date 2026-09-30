@@ -1,0 +1,12 @@
+# Nightly at 01:30 Chicago time: the fleet's boxes are quietest, and the 3090 is free because
+# its owner is asleep. The runner stops by 06:00 on its own.
+[Unit]
+Description=rmi-platform rebuild: nightly run
+
+[Timer]
+OnCalendar=*-*-* 01:30:00 America/Chicago
+RandomizedDelaySec=10m
+Persistent=false
+
+[Install]
+WantedBy=timers.target

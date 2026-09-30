@@ -1,0 +1,11 @@
+# One run of the rebuild: a few tasks from PLAN.md, then stop. Installed as a user unit of
+# `rebuild` on rmi-nuc (runner/install.sh). Start one by hand: systemctl --user start rebuild-run
+[Unit]
+Description=rmi-platform rebuild: one scheduled run
+
+[Service]
+Type=oneshot
+WorkingDirectory=%h/work/rmi-platform-next
+ExecStart=/usr/bin/python3 %h/work/rmi-platform-next/runner/run.py
+TimeoutStartSec=5h
+Nice=10
