@@ -222,3 +222,27 @@ imports SBIS loaders only via `tivs/sbis_seam.py`; "SBIS reads PM property scope
 must decide whether it is in scope; ask about the standalone CIV viewer (#1981); the contract wants
 per-feature `requires` vs `uses_if_present`, a link registry with identity kinds, and one manifest read by
 both API and worker roots.
+
+## 2026-09-30 0.7 — done
+Wrote `docs/architecture/PROPOSAL.md` (~5,400 words, ~11 pages). It covers the core, the one-manifest
+module contract (entry-point discovery, read by both API and worker), the add-a-module checklist and
+template with a contract test, `Ref` identity kinds, a link registry with relations and stored links
+(including unlink), versioned contract packages for seams with provenance, CIV cards with no host
+imports, LLM conventions (MAP.md, 500-line cap, `describe` API, one decision store), GIS dataset
+contracts (envelope from FieldInfo, slot child rows, rel_* edges, expectations, drift check, typed
+absence), the catalog as its own foundation module (domains incl. track-side, unclassified→classify/merge,
+migration from `sbis.equipment_catalog`), module mapping with unbuilt issues placed, the reference hub
+as a later module, all four MISSION decisions (all stand, with evidence), 10 build phases, risks.
+
+**Positions for the operator (§12, R-1..R-10):** rebuild as new repo with modules *ported* not rewritten
+(evolve-in-place stated as viable alternative); one decision store; GlobalID-only; typed absence;
+provenance on seams; slot child rows; catalog holds no prices; standalone CIV viewer deferred; CVS in
+scope; ops as constraints until cutover.
+
+**Checked in source for this run:** `sbis/models.py` EquipmentCatalog + ComponentTokenMap,
+`tivs/assets/registry.py` PROCESSES, `tivs/valuation/models.py` TivsValSnapshot, `arcgis/synced.py`
+GisDatasetRow, `registry/manifest.py`, fee-estimate README/SPEC, #1829, rmigis-pyt trk domains
+(stand/derail/esl). Not verified: live layers, Survey123 field use, runtime seam behaviour.
+
+**Next run should know:** the next PLAN item is behind `CHECKPOINT architecture`; wait for
+`approvals/architecture.md`. After approval, turn §10 into Phase 1 tasks (phase 1 contract work = heavy).
