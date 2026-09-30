@@ -201,3 +201,24 @@ from the live `FieldInfo`, (3) treat stored `has_*`/`_cnt` as untrusted, (4) res
 **Next run should know**: counts of `has_*`/`_cnt`/slot fields are by name regex; Survey123 use of fields
 and live-layer drift were not checked. Feeds 0.6 (seams) and the architecture proposal (per-dataset
 contract: key, envelope, slot_groups, links, expectations, grammar).
+
+## 2026-09-30 0.6 — done
+Wrote `docs/inventory/seams.md`: module↔module couplings (import counts, adapters, URL-by-shape links),
+module→core calls (the de-facto contract), core/shell→module leaks, per-module offers/consumes,
+planned-but-unbuilt items mapped to contract needs, and ten contract requirements (§6).
+
+**Found** (grep over `~/sources/rmi-platform`, tests excluded): `platform_core` imports no module code;
+the manifest covers about half of what a module is, the rest (routers, hooks, validation, card slots,
+resolvers, tasks, cron, settings, access keys, launcher blurb) is hand-wired in about eight
+`platform_web` files; four version-asserted adapters (TIVS→SBIS, and PM phase into SBIS, TIVS, CVS);
+the one real leak is SBIS and TIVS importing CIV's web code (10 import lines) with no adapter; links
+between modules are hard-coded URL strings in three styles (#435 asked for a registry); TIVS cannot
+start without SBIS because of the seam import.
+**Corrections to 0.1 inventory** (`rmi-platform.md`): TIVS does not query `sbis.models.Bungalow`, it
+imports SBIS loaders only via `tivs/sbis_seam.py`; "SBIS reads PM property scope" is not in the code
+(no non-test consumer of PM's `Property`).
+**Not checked:** runtime behaviour, tests for link visibility, DTO fields, `tools/rmi-mcp`.
+**Next run (0.7)** should know: CVS is built and mounted though MISSION does not list it, so the proposal
+must decide whether it is in scope; ask about the standalone CIV viewer (#1981); the contract wants
+per-feature `requires` vs `uses_if_present`, a link registry with identity kinds, and one manifest read by
+both API and worker roots.
