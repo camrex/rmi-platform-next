@@ -249,7 +249,8 @@ def commit_and_push(msg: str, log: Log) -> None:
 def run_pi(task: dict, log: Log, timeout_s: int) -> tuple[int, str]:
     model = TIERS[task["tier"]]
     prompt = (
-        f"You are the unattended rmi-platform rebuild. Your task this run is {task['id']}:\n\n"
+        f"You are the unattended rmi-platform rebuild. Today is {dt.datetime.now(dt.timezone.utc):%Y-%m-%d} (UTC); "
+        f"use that date in the journal. Your task this run is {task['id']}:\n\n"
         f"{task['what']}\n\n"
         "Read MISSION.md and AGENTS.md first and follow them exactly: this task only, the "
         "source repositories are in ~/sources (read-only), journal what you did in JOURNAL.md, "
