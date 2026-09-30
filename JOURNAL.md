@@ -123,3 +123,38 @@ repos with a read-only token and writes only here, with a deploy key. First task
 - Schema design is sound and operationally mature; no blockers for MISSION's "better GIS schemas" objective beyond what's already in the pipeline (topology re-enablement, potential arcgispro-yaml-pyt migration).
 - Ready for task 0.4 (rmigis-pyt and rmi-imagery-tiling inventory) and 0.5 (GIS schema review / optimization analysis).
 - Survey123 is a red herring for this inventory; belongs in platform, not toolbox.
+
+## 2026-10-01 0.4 — done
+
+**Task**: Inventory `rmigis-pyt` and `rmi-imagery-tiling`: what each does and what the platform uses or could use.
+
+**What I did**:
+1. Read MISSION.md, AGENTS.md, PLAN.md, and JOURNAL.md to contextualize.
+2. Explored rmigis-pyt: README, CLAUDE.md (architecture guide), source structure (core, adapters, tools, registry). Read 24 tool implementations, ~5KB pure core logic, ~2KB adapter layer. Studied purity enforcement (ruff TID251 bans arcpy/arcgis in core), settings (Pydantic + YAML), manifest-driven setup, partial-success tracking.
+3. Explored rmi-imagery-tiling: README, CLAUDE.md (status, decisions), SPEC.md (5-phase build), RUNBOOK.md (deploy, backfill, validate). Read tiling core (keys.py, tiler.py, events.py), Lambda wrapper (handler.py), Terraform IaC, backfill/validation scripts. Traced deployment (ECR, Lambda 3008MB/120s, reserved concurrency 200, S3 buckets, event trigger).
+4. Examined tile-contract.v1.json: authoritative single source between tiling pipeline and CIV; per-frame: base.jpg (2048x1024 q80) + 128 tiles (768x768 q80, 16x8 grid), 129 objects total, immutable cache headers.
+5. Traced platform integration: CIV module reads tile-contract.v1 in pano.py (tile_root() derives frame root from OID imagepath), settings.py (image_resolver strategy, tiles_base_url, frame_source).
+6. Analyzed production status: rmigis-pyt in per-tool migration (3 of 24 live); rmi-imagery-tiling fully deployed 2026-07-02, all three projects backfilled (113K + 51K frames), event trigger live, zero failed tasks.
+7. Identified integration seams: rmigis-pyt outputs -> Portal feature services -> platform GIS sync -> modules read synced data; rmi-imagery-tiling outputs -> S3 tiles -> platform HTTP GETs + browser.
+8. Documented future use cases (schema validation lib, field/domain sync patterns, async task patterns, contract-driven design).
+
+**Result**: Created `docs/inventory/gis-tools-and-tiling.md` (~1,250 lines) covering:
+- Overview (two independent tools, read-only platform integration, async).
+- rmigis-pyt (14 sections): architecture (purity separation, registry, config), ~24 tools across 6 categories (project setup, FC creation, field sync, data mgmt, publishing, real property, admin, map), code structure, key patterns (manifest-driven, dry-run as default, partial-success), platform integration (Portal feature services -> GIS sync), dev/deploy (Windows ArcGIS Pro, pytest headless + contract suite, three-role environments), known limitations.
+- rmi-imagery-tiling (12 sections): purpose (equirectangular -> tiles), architecture (pure core + boto3 wrapper), tile contract (JSON, 129 objects/frame, immutable), components (tiling core, Lambda wrapper, recursion guard, Terraform, backfill/ops scripts), code structure, key patterns (idempotency, whole-frame failures, separate derived bucket, lifecycle), production status (backfilled 164K frames, event-driven), platform integration (CIV consumes tiles, tile URLs, settings), development (local tests no AWS).
+- Seams with platform (GIS sync, imagery streaming, failure modes).
+- Known limitations & future work (both repos).
+- Key file paths for both.
+
+**What I found**:
+- rmigis-pyt is well-architected rewrite: pure/adapter separation enforced by tooling, settings in pydantic, manifest-driven (closes convention gaps in old toolbox), dry-run as default-safe, partial-success reporting. ~24 tools live; 3 in migration; others await office smoke tests. Three-role environment distinction (Pro runtime, GIS dev, non-GIS CI) has bitten before; dev box is richer than CI.
+- rmi-imagery-tiling is proven at scale: tiled 164K frames (all three projects), zero failures, ~7 s/frame post-optimization. Contract is JSON on disk (tile-contract.v1.json); Lambda + S3 fully independent of platform. Idempotency via HEAD short-circuit; force flag via env + Batch userArguments; recursion structurally impossible + code guard. Event trigger live on originals.
+- Both tools are general-purpose and extraction-worthy: rmigis-pyt's schema validation + field sync logic is reusable; rmi-imagery-tiling's tiler is pure and deployable elsewhere; both exhibit contract-driven design patterns.
+- Platform never drives these tools; only consumes outputs. Seams are read-only (feature services, S3 tiles). Decoupling is clean.
+
+**Next run should know**:
+- Task 0.4 complete; inventory comprehensive with architecture, code paths, production status, integration seams, future use cases.
+- rmigis-pyt ~24 tools live with ~3 in migration; no blocking issues, awaiting office validation.
+- rmi-imagery-tiling fully deployed, proven at 164K frames, live event trigger, nearly zero ops cost ongoing.
+- Both repos have extraction value (schema lib, async patterns, contract design) for future platform features.
+- Ready for task 0.5 (GIS schema review / optimization) and 0.6 (seams analysis across all discovered repos).
