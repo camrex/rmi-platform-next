@@ -226,7 +226,7 @@ A new session of any model should find its way in minutes.
 - **Tests explain intent:** names state the rule (`test_unpriced_labor_line_poisons_labor_leg`), and
   every issue-derived rule cites its issue in the docstring. The test DB is built from migrations
   (#928). The async harness is pinned on day one: explicit loop scopes, a single async plugin, and
-  documented connection strategies. The CI loop flake (#1943, #1951) cost months.
+  documented connection strategies. The CI loop flake (#1943, #1951) gave the current project a long stretch of coin-flip CI.
 - **UI built from the kit only.** No CSS, JS or URL assembled in Python strings (#1592, #1927,
   #837). URLs come from a helper that quotes identifiers. Refused requests appear in one kit place
   (#1690, option A).
