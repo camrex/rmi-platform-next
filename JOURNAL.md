@@ -246,3 +246,7 @@ GisDatasetRow, `registry/manifest.py`, fee-estimate README/SPEC, #1829, rmigis-p
 
 **Next run should know:** the next PLAN item is behind `CHECKPOINT architecture`; wait for
 `approvals/architecture.md`. After approval, turn §10 into Phase 1 tasks (phase 1 contract work = heavy).
+
+## 2026-09-30 03:44 UTC runner — waiting
+
+Runner: waiting at checkpoint 'architecture' (approvals/architecture.md missing).
