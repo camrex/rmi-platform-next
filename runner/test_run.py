@@ -52,6 +52,8 @@ class Plan(unittest.TestCase):
         self.assertTrue(run.UNAVAILABLE.search("400 Invalid model name passed in model=fleet-coder"))
         self.assertTrue(run.BUDGET.search("Budget has been exceeded! Current cost: 50.1"))
         self.assertFalse(run.BUDGET.search("all good"))
+        self.assertTrue(run.TRANSIENT.search("02:46:22 Connection error."))
+        self.assertFalse(run.TRANSIENT.search("finished the review"))
 
     def test_real_plan_parses(self):
         real = (pathlib.Path(__file__).parent.parent / "PLAN.md").read_text()

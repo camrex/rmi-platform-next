@@ -54,6 +54,11 @@ TASK_RE = re.compile(r"^- \[( |x)\] (\S+) \[(\w+)\] (.+)$")
 CHECKPOINT_RE = re.compile(r"^## CHECKPOINT (\S+)")
 UNAVAILABLE = re.compile(r"invalid model name|no deployments available|no healthy deployments", re.I)
 BUDGET = re.compile(r"budget.{0,40}exceeded|exceeded.{0,40}budget|max_budget", re.I)
+# The router restarting (a re-apply, a reboot of the Pi) is not the task failing: say so, keep
+# the partial work, stop for tonight, and do not count it against MAX_ATTEMPTS. Matched only in
+# the last lines of output, so an error the agent quoted mid-task does not trigger it.
+# (2026-09-29: 0.5 was cut off by a router re-apply and charged an attempt.)
+TRANSIENT = re.compile(r"connection error|econnrefused|econnreset|socket hang up|503 service unavailable", re.I)
 
 
 def utc() -> str:
@@ -339,6 +344,8 @@ def main() -> int:
             reason = f"tier '{task['tier']}' unavailable (its fleet box is busy or offline); waiting"
         elif BUDGET.search(out):
             reason = "the router refused: cloud budget spent for this period; waiting for the reset"
+        elif TRANSIENT.search(tail):
+            reason = "the router could not be reached (restarting?); not counted as a failed attempt"
         else:
             n = state["attempts"].get(task["id"], 0) + 1
             state["attempts"][task["id"]] = n
