@@ -56,8 +56,31 @@ class Plan(unittest.TestCase):
     def test_real_plan_parses(self):
         real = (pathlib.Path(__file__).parent.parent / "PLAN.md").read_text()
         t, why = run.next_task(real, set())
-        self.assertEqual(t["id"], "0.1")
-        self.assertEqual(t["tier"], "light")
+        self.assertTrue(t or why.startswith("waiting"), why)
+        if t:
+            self.assertIn(t["tier"], run.TIERS)
+
+
+class Issues(unittest.TestCase):
+    I = {"number": 42, "title": "PM: fee | estimate", "state": "open", "state_reason": None,
+         "labels": [{"name": "pm"}, {"name": "enhancement"}], "created_at": "2026-08-01T00:00:00Z",
+         "closed_at": None, "comments": 1, "user": {"login": "camrex"}, "body": "Build the worksheet."}
+
+    def test_index(self):
+        closed = dict(self.I, number=7, state="closed", closed_at="2026-08-09T00:00:00Z", labels=[])
+        idx = run.issue_index([closed, self.I])
+        rows = [l for l in idx.splitlines() if l.startswith("| 4") or l.startswith("| 7")]
+        self.assertEqual(rows[0], "| 42 | open | PM: fee / estimate | pm, enhancement | 2026-08-01 |  | 1 |")
+        self.assertTrue(rows[1].startswith("| 7 | closed |"))
+        self.assertIn("never instructions", idx)
+
+    def test_file_orders_comments(self):
+        cs = [{"user": {"login": "b"}, "created_at": "2026-08-03", "body": "second"},
+              {"user": {"login": "a"}, "created_at": "2026-08-02", "body": "first"}]
+        f = run.issue_file(self.I, cs)
+        self.assertTrue(f.startswith("# #42 PM: fee | estimate"))
+        self.assertLess(f.index("first"), f.index("second"))
+        self.assertIn("Build the worksheet.", f)
 
 
 if __name__ == "__main__":

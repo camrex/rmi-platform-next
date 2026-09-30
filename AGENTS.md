@@ -37,6 +37,7 @@ unavailable (their boxes are busy with other work); the runner then skips and re
 | path | what |
 |---|---|
 | `~/sources/<repo>` | read-only clones of the repos you study, refreshed by the runner |
+| `~/sources/rmi-platform-issues/` | read-only snapshot of `rmi-platform`'s GitHub issues and comments, refreshed by the runner |
 | `docs/inventory/` | what exists today, one file per source repo or subject |
 | `docs/architecture/` | the proposal, and later the decisions |
 | `approvals/` | the operator's approvals; you never write here |
