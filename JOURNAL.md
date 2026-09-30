@@ -175,3 +175,11 @@ Tabled by the owner, so do not design around them: documents (#1298/#601/#1299),
 
 **Next run should know**: the write-back design (#866 slices) and the GIS schema asks (#1042, #1026,
 #896, #746, #747, #729) feed task 0.5; the seam findings feed 0.6 and the architecture proposal.
+
+## 2026-09-30 02:46 UTC 0.5 — runner
+
+Runner: ended without finishing (exit 1), attempt 1 of 3.
+
+```
+Connection error.
+```
