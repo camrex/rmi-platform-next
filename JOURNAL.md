@@ -708,3 +708,11 @@ was there; I replaced it) and added `core/tests/test_resolve.py` (14 tests). `ma
 and keep `Resolution.disabled` for `describe` (B1.11) and the contract test (B1.14); `providers`
 maps seam name -> module key. Duplicate seam offers cannot be built from one manifest (the model
 forces the `<key>.` prefix), so that branch is defensive and untested.
+
+## 2026-10-02 23:58 UTC B1.10 — runner
+
+Runner: ended without finishing (exit 0), attempt 1; retrying now.
+
+```
+
+```
