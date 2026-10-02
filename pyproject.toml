@@ -24,7 +24,7 @@ dev = [
     "ruff>=0.8",
     "pyright>=1.1.410",
     "pytest>=8",
-    "pytest-asyncio>=0.24",
+    "pytest-asyncio>=1.0",
     "pyyaml>=6.0",
 ]
 
@@ -51,5 +51,7 @@ extraPaths = ["core/src"]
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
+asyncio_default_test_loop_scope = "function"
+pythonpath = ["."]
 testpaths = ["tests", "core/tests", "modules"]
-addopts = "-ra --strict-markers --import-mode=importlib"
+addopts = "-ra --strict-markers --import-mode=importlib -p no:anyio"

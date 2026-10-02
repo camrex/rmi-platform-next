@@ -603,3 +603,27 @@ Runner: ended without finishing (exit 0), attempt 2; re-tagged from drudge to li
 - B1.5 is done; the workflow is committed and ready.
 - All B1 harness tasks up to B1.5 are complete.
 - Next phases require database setup (B1.6) and module framework implementation (B1.7 onwards).
+
+## 2026-10-02 B1.6 — done
+
+**What I did**: test database harness in `tests/harness/`, documented in `docs/TESTING.md`.
+- `psql -d rmi -c 'select 1'` works (PostgreSQL 18.6, role `rebuild`, CREATEDB, peer auth); no block.
+- `tests/harness/db.py` (helpers: scratch DB create/drop WITH FORCE, `discover_chains`, `upgrade`
+  runs `alembic upgrade head` per chain), `tests/harness/plugin.py` (fixtures `migration_chains`,
+  `scratch_database_url` session/sync, `db_engine` and `db_session` function-scoped), root
+  `conftest.py` loads the plugin. `db_session` joins an outer transaction with
+  `create_savepoint`, so tests may commit and everything rolls back.
+- `pyproject.toml`: `asyncio_mode=auto`, fixture and test loop scope both `function`, `-p no:anyio`,
+  `pythonpath=["."]`, pytest-asyncio >=1.0. `core/pyproject.toml` now depends on sqlalchemy[asyncio],
+  asyncpg, alembic (uv.lock updated).
+- Schema comes only from Alembic chains; a test fails if any `.py` calls `create_all`. The harness
+  tests use their own sample chain (`tests/harness/sample_chain/`) via an overriding `migration_chains`.
+- If the server is unreachable the DB tests skip; `RMI_REQUIRE_DB=1` makes them fail (verified both).
+- `docs/TOOLCHAIN.md` updated: PostgreSQL no longer missing. `make check` green (30 tests, pyright strict clean).
+
+**Next run should know**:
+- Chain convention (docs/TESTING.md): `<pkg>/migrations/{env.py,versions/}`, URL from
+  `config.attributes["url"]`, version table `alembic_version_<chain>`. B1.15 can reuse `tests/harness/db.py`.
+- CI (`ci.yml`) has no PostgreSQL service, so DB tests skip there; set `RMI_TEST_ADMIN_DSN` and
+  `RMI_REQUIRE_DB=1` when it gets one (operator follow-up, noted in TESTING.md).
+- PostGIS not checked or used; B3 decides.

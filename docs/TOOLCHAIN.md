@@ -14,7 +14,7 @@ Checked on `rmi-nuc` (Ubuntu 26.04, x86_64, user `rebuild`, no sudo), 2026-10-02
 | git | `/usr/bin/git` | — |
 | node / npm | `~/.local/node/bin` | pyright fetches nothing from it; not otherwise needed yet |
 | docker | `/usr/bin/docker`, but `rebuild` is not in the `docker` group (socket permission denied) | unusable |
-| PostgreSQL | no server, no `psql`, nothing listening on 5432 | see below |
+| PostgreSQL | none at B1.1; since B1.6 PostgreSQL 18.6 with role `rebuild` (CREATEDB), peer auth on the socket | used by the test harness: docs/TESTING.md |
 | gh | none | not needed |
 
 Outbound access to PyPI and GitHub works; `apt-get download` works (no install).
@@ -47,7 +47,7 @@ Verified: `env -i PATH=/usr/bin:/bin ~/.local/bin/make check` passes.
 
 ## Missing — for the operator
 
-1. **PostgreSQL.** No server, no docker access. B1.6 (test database harness) and B1.15 (migrations
+1. **PostgreSQL (resolved, B1.6: the operator installed 18; the options below are history).** No server, no docker access. B1.6 (test database harness) and B1.15 (migrations
    check) need one. Pick one:
    - add `rebuild` to the `docker` group and say so (then `postgis/postgis` or `postgres:16`
      in a container); or
