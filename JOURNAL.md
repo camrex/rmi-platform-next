@@ -507,3 +507,35 @@ Rewrote `scripts/check_module_isolation.py` (the local attempts' version diffed 
 - Wiring: `make check-isolation BASE=<ref> MODULE=<key>` (not part of `make check`, which has no arguments) and `.github/workflows/module-isolation.yml`: on pull requests from branches named `module/<key>[/...]` it runs the check against the PR base SHA; other branches skip it. B1.5 should create `ci.yml` separately for `make check`.
 - Convention introduced: module work happens on `module/<key>` branches.
 - The new files pass ruff and pyright strict. `make check` is NOT green: pyright reports errors already present in `scripts/check_file_size.py`, `scripts/check_core_clean.py` and their tests (B1.2, B1.3; untyped `main()` and test fixtures). Next run should fix those (a coder/standard task is worth adding before B1.5 so CI can be green).
+
+## 2026-10-02 23:14 UTC B1.4 — runner
+
+Runner: the task was ticked but `make check` failed, so it is un-ticked (attempt 1). The next attempt starts from this commit.
+
+```
+  /home/rebuild/work/rmi-platform-next/tests/scripts/test_check_file_size.py:31:47 - error: Type of parameter "tmp_project" is unknown (reportUnknownParameterType)
+  /home/rebuild/work/rmi-platform-next/tests/scripts/test_check_file_size.py:31:47 - error: Type annotation is missing for parameter "tmp_project" (reportMissingParameterType)
+  /home/rebuild/work/rmi-platform-next/tests/scripts/test_check_file_size.py:32:5 - error: Type of "write_text" is unknown (reportUnknownMemberType)
+  /home/rebuild/work/rmi-platform-next/tests/scripts/test_check_file_size.py:33:28 - error: Argument type is unknown
+    Argument corresponds to parameter "object" in function "__new__" (reportUnknownArgumentType)
+  /home/rebuild/work/rmi-platform-next/tests/scripts/test_check_file_size.py:36:47 - error: Type of parameter "tmp_project" is unknown (reportUnknownParameterType)
+  /home/rebuild/work/rmi-platform-next/tests/scripts/test_check_file_size.py:36:47 - error: Type annotation is missing for parameter "tmp_project" (reportMissingParameterType)
+  /home/rebuild/work/rmi-platform-next/tests/scripts/test_check_file_size.py:37:5 - error: Type of "write_text" is unknown (reportUnknownMemberType)
+  /home/rebuild/work/rmi-platform-next/tests/scripts/test_check_file_size.py:38:28 - error: Argument type is unknown
+    Argument corresponds to parameter "object" in function "__new__" (reportUnknownArgumentType)
+  /home/rebuild/work/rmi-platform-next/tests/scripts/test_check_file_size.py:41:42 - error: Type of parameter "tmp_project" is unknown (reportUnknownParameterType)
+  /home/rebuild/work/rmi-platform-next/tests/scripts/test_check_file_size.py:41:42 - error: Type annotation is missing for parameter "tmp_project" (reportMissingParameterType)
+  /home/rebuild/work/rmi-platform-next/tests/scripts/test_check_file_size.py:42:5 - error: Type of "write_text" is unknown (reportUnknownMemberType)
+  /home/rebuild/work/rmi-platform-next/tests/scripts/test_check_file_size.py:43:28 - error: Argument type is unknown
+    Argument corresponds to parameter "object" in function "__new__" (reportUnknownArgumentType)
+  /home/rebuild/work/rmi-platform-next/tests/scripts/test_check_file_size.py:46:5 - error: Type of "unlink" is unknown (reportUnknownMemberType)
+  /home/rebuild/work/rmi-platform-next/tests/scripts/test_check_file_size.py:47:5 - error: Type of "write_text" is unknown (reportUnknownMemberType)
+  /home/rebuild/work/rmi-platform-next/tests/scripts/test_check_file_size.py:48:28 - error: Argument type is unknown
+    Argument corresponds to parameter "object" in function "__new__" (reportUnknownArgumentType)
+  /home/rebuild/work/rmi-platform-next/tests/scripts/test_check_file_size.py:51:5 - error: Type of "unlink" is unknown (reportUnknownMemberType)
+  /home/rebuild/work/rmi-platform-next/tests/scripts/test_check_file_size.py:52:5 - error: Type of "write_text" is unknown (reportUnknownMemberType)
+  /home/rebuild/work/rmi-platform-next/tests/scripts/test_check_file_size.py:53:28 - error: Argument type is unknown
+    Argument corresponds to parameter "object" in function "__new__" (reportUnknownArgumentType)
+43 errors, 0 warnings, 0 informations
+make: *** [Makefile:23: typecheck] Error 1
+```
