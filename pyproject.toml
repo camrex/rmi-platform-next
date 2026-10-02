@@ -1,0 +1,55 @@
+# Workspace root (uv). Not itself installable; it pins the Python, the dev tools and the
+# ruff / pyright / pytest settings every member inherits. See docs/TOOLCHAIN.md.
+[project]
+name = "rmi-platform-next"
+version = "0.0.0"
+description = "rmi-platform, rebuilt: a small core and modules that register through one contract"
+requires-python = ">=3.12,<3.13"
+dependencies = ["rmi-core"]
+
+[tool.uv]
+package = false
+default-groups = ["dev"]
+
+[tool.uv.sources]
+rmi-core = { workspace = true }
+
+[tool.uv.workspace]
+# Each module is a member (modules/<key>/pyproject.toml) once it exists.
+members = ["core", "modules/*"]
+exclude = ["modules/_template"]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.8",
+    "pyright>=1.1.410",
+    "pytest>=8",
+    "pytest-asyncio>=0.24",
+    "pyyaml>=6.0",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+extend-exclude = ["runner", "data", "docs", "**/*.md", "**/alembic/versions"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "C4", "SIM", "TID"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["rmi_core"]
+
+[tool.pyright]
+include = ["core", "contracts", "modules", "scripts", "tests"]
+exclude = ["**/alembic/versions", "**/__pycache__", "modules/_template"]
+typeCheckingMode = "strict"
+pythonVersion = "3.12"
+venvPath = "."
+venv = ".venv"
+extraPaths = ["core/src"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests", "core/tests", "modules"]
+addopts = "-ra --strict-markers --import-mode=importlib"

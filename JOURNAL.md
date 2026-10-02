@@ -443,3 +443,28 @@ planning). Verified the runner parses the plan (`runner/test_run.py` passes; fir
 **Next run should know.** B1.1 first. No code exists yet; if the box has no PostgreSQL or uv, B1.1
 should say so in `docs/TOOLCHAIN.md` and B1.6/B1.15 will block until the operator provides one.
 I did not check the box's toolchain beyond `python3 --version` (3.14.4, no pip) and `which`.
+
+## 2026-10-02 B1.1 — done
+**Found** (full table in `docs/TOOLCHAIN.md`): system python 3.14.4 with no pip or ensurepip; no
+python 3.12, uv, make, ruff, pyright, pytest; docker present but `rebuild` is denied the socket; no
+PostgreSQL anywhere; no sudo. PyPI, GitHub and `apt-get download` are reachable.
+**Did** (all user-level, no root): installed uv 0.12.22 and Python 3.12.15 (via uv) and `make` 4.4.1
+(`apt-get download` + `dpkg -x`) into `~/.local/bin`. Chose a **uv workspace** (old platform's
+layout, one lockfile, per-module packages for the `rmi.modules` entry point). Created root
+`pyproject.toml` (python `>=3.12,<3.13`; ruff, pyright strict, pytest + pytest-asyncio auto mode),
+`Makefile` (`make check` = sync, ruff check + format check, pyright, pytest), `.gitignore`,
+`core/pyproject.toml` + `core/src/rmi_core/__init__.py` (empty workspace member), `contracts/`,
+`modules/`, `scripts/` (with `.gitkeep`), `tests/test_toolchain.py` (two trivial tests), committed
+`uv.lock`. `make check` is green, also under `env -i PATH=/usr/bin:/bin ~/.local/bin/make check`.
+**Next run should know.**
+- `make` and `uv` live in `~/.local/bin`, which is **not** on the runner's PATH (`runner/run.py` adds
+  only `~/.local/node/bin`). The Makefile adds it for `uv`, but call `~/.local/bin/make check` (or the
+  operator adds that dir to the runner's PATH / installs make). Runner not edited (out of task).
+- **PostgreSQL is missing.** I verified `pgserver` (PyPI, PG 16.2, no root, no PostGIS) starts via
+  uv. I amended B1.6 in PLAN to try it before blocking. Operator options are in TOOLCHAIN.md. B1.15
+  needs a database too.
+- pyright runs strict over `core contracts modules scripts tests`, with `extraPaths = ["core/src"]`;
+  ruff skips `docs`, `runner`, `data`. Ruff/pyright were newer than the old platform's pins (0.16,
+  1.1.414); lockfile holds them.
+- `modules/*` is a workspace glob, `_template` excluded; `modules/` is empty now, so B1.12 should
+  keep the template out of the workspace and out of pyright (already excluded in the config).
