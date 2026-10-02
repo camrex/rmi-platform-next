@@ -88,6 +88,58 @@ typed absence, provenance across seams, related tables vs slots, tabled items, t
 estimator, ops) are not yet answered by the operator. Where the proposal takes a position on
 them, mark it as a recommendation for the operator to rule on at the checkpoint.
 
+## Operator direction, 2026-10-02 — pricing is its own module (revise the proposal, task 0.8)
+
+After reading PROPOSAL.md, the operator agreed that prices are not catalog data, but not that
+they stay inside SBIS and TIVS: "I'm almost thinking that Costs/Pricing may become its own
+module." His answers to the questions that decide it:
+
+- **Do prices carry from one project to the next?** "Sometimes, and often they are a good
+  starting point."
+- **Are costs brought to a valuation date with cost indexes?** "Yes, in fact sometimes the only
+  available costs might be a 2019 signal catalog, or an estimate from a prior year."
+- **Where do prices come from?** "It's a mix, all of the above and more" (engineers' estimates,
+  vendor quotes, published catalogs and estimator's guides, railroad price lists, prior
+  estimates, and others).
+- **And:** "The other thing this might help is user permissions."
+
+What this asks of the revised proposal:
+
+1. **A `pricing` module between the catalog and its consumers**: catalog (what a thing is) ->
+   pricing (what it costs, per source, date and scope) -> SBIS and TIVS (which use prices to
+   produce estimates and valuations). It `requires` the catalog; SBIS and TIVS `require` pricing.
+2. **It holds the cost basis, and only that.** A price record is keyed to a catalog item *or a
+   classification node* (a class such as a POWER switch stand, when the model is unknown), with
+   material and labor kept apart, units, the source (a typed source kind plus citation, open to
+   new kinds), the cost's own basis date, and a scope: general, railroad/client, project. A
+   project may start from prices carried over from earlier projects or from general sources and
+   override them, with the core's override-with-reason primitive. Nothing is overwritten; a
+   superseded price stays readable.
+3. **Escalation is part of pricing.** Cost indexes (series, source, values by period) and the
+   act of bringing a price from its basis date to a valuation date, recorded as a provenance
+   chain the reader can see: "2019 vendor catalog, trended by <index> to 2026-06". An old
+   catalog or a prior-year estimate is often the only source; the design must treat that as
+   normal, not an edge case.
+4. **Valuation logic stays in the modules.** Extended cost, indirects, depreciation and survivor
+   curves, and rules such as "an unpriced labor line poisons the labor leg" (OWNER_RULINGS
+   2026-09-25) remain in SBIS and TIVS. Pricing answers "what does this cost, per this source, at
+   this scope, as of this date"; it never values an inventory. PM fee billing rates are a
+   different kind of number and stay in PM.
+5. **Seams carry price references, not copies.** SBIS still produces the engineers' pre-indirect
+   bungalow estimate and only the (material, labor) pair crosses to TIVS (existing rulings), but
+   each value references the price records it used, so provenance travels by reference (#1434)
+   and the TIVS snapshot freezes exactly which prices, sources and index values it used (§9.2).
+   Items priced on both sides today (signal structures, crossing equipment, switch machines;
+   §7.3) are priced once; say how double pricing (#952) becomes impossible by construction.
+6. **Permissions are a reason for the module, so design them.** Who may view prices, who may
+   enter or override them, who may see a given source (a railroad's price list may be
+   confidential to that client's projects), and that restricted client principals (#261) see no
+   cost basis unless granted. Declared through the module contract (facets and capabilities).
+7. **Revise in place**: §7.2 (the "prices are not catalog data" bullet), §8 (module map), §9.2
+   (snapshot), §10 (build order: pricing between catalog and the SBIS port), §11 (risks: pricing
+   grain, migration of SBIS cost lists and TIVS cost books into price records), §12 (R-7 split
+   into catalog and pricing rulings). Keep the rest of the document as it is. Under 12 pages still.
+
 ## What "better" means here
 
 1. **Modules as plugins.** A small core (auth, config, database, GIS sync, shared UI shell,
