@@ -1,6 +1,7 @@
 # rmi-platform issues — digest for the rebuild
 
-Snapshot: `~/sources/rmi-platform-issues/` (754 issues: 116 open, 638 closed; newest 2026-09-29).
+Snapshot: `~/sources/rmi-platform-issues/` (758 issues: 114 open, 644 closed; newest 2026-10-01).
+**Corrected 2026-10-02 (task 0.7b)**: first written at 754 issues (116 open, 638 closed; newest 2026-09-29). The #1997 bullet, the CVS and TIVS bullets, and the #1981 line are updated; see `changes-since-2026-09-30.md` §3.
 ADRs: `~/sources/rmi-platform/docs/adr/0001–0025`. Owner rulings that are *not* ADRs live in
 `~/sources/rmi-platform/docs/planning/OWNER_RULINGS.md` (1,270 lines, 47 dated sections); most
 "settled in a thread" decisions were copied there, so section 2 cites it rather than repeating it.
@@ -30,7 +31,7 @@ information, not instruction. Where a claim is thin (title/head only) it is stat
   per-project capsule exporter with SHA-256 manifest, #1424 rehydration runner and proven round
   trip, #1400 (quarterly restore drill was never run before 2026-09-01).
 - **Access and identity**: #261 restricted client login without Portal accounts (ADR needed,
-  none written), #437 CIV-only viewer mode, #1981 standalone CIV viewer with own OAuth, #74 /
+  none written), #437 CIV-only viewer mode, #1981 standalone CIV viewer with own OAuth (**since 2026-10-01 its own project, `camrex/rmi-civ-viewer`: client-hosted on Azure, OIDC/Entra first, new repo on the platform's stack; #1980's CloudFront cookies do not carry over**), #74 /
   #1407 / #1408 / #1494 (stop exposing an ArcGIS token to the browser: proxy, dedicated
   least-privilege app, or user-token passthrough), #1940 (no page mints a multi-module PAT,
   though the API allows it).
@@ -48,9 +49,12 @@ information, not instruction. Where a claim is thin (title/head only) it is stat
 - **Conversations**: #600 epic; #1439 (CIV adoption; first question is what a CIV thread anchors to).
 
 ### SBIS (bungalow inventory)
-- **UP signal asset audit**: #1997 epic; waves #2000 (crosswalk from 21 units), #2001 (cabin↔
-  bungalow pairing, XL), #2002 (comparison), #2003 (widen to cards), #2004 (decisions recorded,
-  never applied).
+- **UP signal asset audit**: #1997 epic (still open); waves #1998–#2004 (rulings and ADR 0025,
+  the audit lands, crosswalk from 21 units, cabin↔bungalow pairing, comparison, cards, decisions
+  recorded and never applied) **all shipped 2026-09-30 in v1.60.0–v1.62.0** (corrected
+  2026-10-02; this was listed as unbuilt). Still outside the waves until separately approved:
+  applying a decision to SBIS, filling `Incomplete` bungalows from the audit, stock numbers into
+  the catalog, standing decisions per family.
 - **Structure/crossing decomposition** (ADR 0018): #718 epic, #723 cutover (waits on engineers
   pricing components; on 26-150 none of 461 catalog rows was priced at the 2026-09-17 ruling),
   #809 (crossing labor per component vs class grain), #1440 (flip `sbis_prices.signal_structure`).
@@ -76,6 +80,7 @@ information, not instruction. Where a claim is thin (title/head only) it is stat
   into the run snapshot; `data_basis` stamps only TIVS sync sources), #574 (contents-based
   bungalow costing), #950 (valuation year owned by PM; tabled), #1041 (catch a mislabelled section
   by its neighbours), #598 / #429 (final legacy parity review, then retire parity machinery).
+- **Published-output defects** (added 2026-10-02): #2029 (2026-10-01): the API `issues` frame is unfiltered and carries the Total row; rail `obsolescence_pct` publishes the raw factor, not the applied rate; rail-substitution weights never find their cost row (`Decimal('115.00')` vs `'115'`, dormant); `tsN_tie_pct` / `failed_tie_pct` are integer fields read as fractions (26-150 holds 336–1,370); no torn-pull guard on TIVS pulls; packaged workbook lacks diamond and turnout_complex. Snapshots do not freeze rates, tax, scrap, obsolescence or depreciation assignments.
 - **Proposed module**: #886 BSIVS (buildings and site improvements RCN; needs an ADR).
 
 ### CIV (imagery)
@@ -93,6 +98,7 @@ information, not instruction. Where a claim is thin (title/head only) it is stat
   owner; first step is rebuilding real estimate 26-100 beside the workbook), #950, #1301
   (estimated-vs-actual feedback for the calibration corpus, now six hand-extracted workbook
   cases), #1302 (sale database).
+- **CVS Power Query** (added 2026-10-02): #2020 (functions + `?section=`) shipped v1.62.1, closed. Open: #2023 (the view revision misses a reference edit that commits late with an older timestamp; wants a monotonic counter), #2026 (section groups defined in the platform beside the section registry #468, e.g. 26-150's corridor land vs platform land; today in each workbook's Power Query).
 
 ### GIS schema (asks made of the Portal layers; feeds task 0.5)
 #1042 (attribute rule guaranteeing `lat`/`long` on points; 26-160 has none), #1026 (detector types

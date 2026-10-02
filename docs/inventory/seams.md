@@ -5,6 +5,8 @@ Source: `~/sources/rmi-platform` (paths below are relative to it), read 2026-09-
 Import edges were counted with grep over `modules/*/src` and `platform-web/src` (tests excluded).
 Counts are of import lines, not of call sites.
 
+**Corrected 2026-10-02 (task 0.7b)**: re-read against v1.62.2 (was v1.59.1 plus ADR 0025). RR Audit and the CVS Power Query contract add **no seam**: `SEAM_VERSION` is still 6 (`sbis/seam.py:105`), and the RR-audit code imports nothing from `civ`, `tivs` or `pm`. Counts in §3–§4 below were fixed where wrong; see `changes-since-2026-09-30.md`.
+
 ## 1. Summary
 
 - **The core is already clean.** `platform/src/platform_core` imports no module code (grep finds
@@ -144,12 +146,13 @@ one declaration.
 Legend — **offers**: things other modules or the shell use. **consumes**: what it needs from the
 core or other modules. "Missing-module behaviour" is what should happen when the other side is absent.
 
-### SBIS (`modules/sbis`, schema `sbis`, 51 migrations)
+### SBIS (`modules/sbis`, schema `sbis`, 53 migrations; 51 when first written)
 - **Routes:** ~33 routers under `/sbis`, plus `/api/v1/sbis` (PAT). Literal-before-parameter mount order matters. Biggest file `web/routes.py` 2,833 lines (#842).
 - **Models:** bungalow, signal asset and asset fields, catalog, costs, units/main systems/templates, external refs, `SbisSetting`, RR-audit import tables (#1997).
 - **Migrations:** own chain; ~10 data migrations read `platform.*` (GlobalID backfill, project FKs).
 - **Permissions:** module key `sbis`; facets `edit:inventory`, `edit:costs`, `edit:gis`, `edit:dax`; project-admin settings.
-- **Nav / config surfaces:** one nav item (`Bungalows`), config surfaces for settings, catalog, templates.
+- **Nav / config surfaces:** one nav item in the manifest (`Bungalows`), config surfaces for settings, catalog, templates. A second nav entry, `/sbis/rr-audit` ("RR Audit"), is declared in `web/layout.py:248` (`_NAV_SECTIONS`) and **not** in `SBIS_MANIFEST`: nav declared outside the manifest (added v1.60.0). RR-audit routes number 23 handlers in `web/rr_audit_*.py`, admin tier; `composition.py` has 36 `include_router` calls (30 at v1.59.1).
+- **Data classes (ADR 0025):** the RR-audit tables are *third-party evidence held beside the inventory*, a class ADR 0016 §3 now names. `catalog_delete`/`catalog_merge` carry a `crosswalk` blocker (RESTRICT reference to the catalog): the first case of another table family pointing into the catalog.
 - **Jobs:** `sbis_generate_inventory_sheets`, `sbis_parse_rr_audit`; sync hooks (bungalow halves; per-family include mirroring).
 - **Offers (links/data):** bungalow/asset detail pages (`/sbis/bungalows/by-gis/{id}`); `sbis:contents` card slot; the priced-inventory DTOs TIVS consumes (`sbis.seam`, `asset_seam`, `estimate`); validation provider; conversation anchors `bungalow`, `asset`, `catalog_item`; PAT API.
 - **Consumes:** GIS datasets `bungalows` (required) and nine asset families; PM phase; CIV 360° card (host route + import); TIVS asset URL (by shape).
@@ -178,7 +181,7 @@ core or other modules. "Missing-module behaviour" is what should happen when the
 ### CVS (`modules/cvs`, schema `cvs`, 5 migrations)
 Not in MISSION.md's module list, but built and mounted. Routes `/cvs/valuation`, `/cvs/reference`,
 exports; `/api/v1/cvs`; models valuation run/subject, sales groups, unit values, `CvsSetting`, sync
-run/gap, `SubjectSegment`; task `cvs_sync_subject_segments`; hook `register_cvs_sync_hooks`; consumes
+run/gap, `SubjectSegment`; a published-view API (`/api/v1/cvs/views/<view>`, `?section=`, revision token, snapshot-read pager) and packaged Power Query files served at `/cvs/connect/powerquery/<name>.pq` (v1.62.1–2); task `cvs_sync_subject_segments`; hook `register_cvs_sync_hooks`; consumes
 one dataset and the PM phase. Offers no links. It is the cleanest plugin today and is the natural
 test of the contract. **Question for the operator (goes in the proposal):** is CVS in scope for the
 rebuild?

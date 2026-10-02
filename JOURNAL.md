@@ -250,3 +250,28 @@ GisDatasetRow, `registry/manifest.py`, fee-estimate README/SPEC, #1829, rmigis-p
 ## 2026-09-30 03:44 UTC runner — waiting
 
 Runner: waiting at checkpoint 'architecture' (approvals/architecture.md missing).
+
+## 2026-10-02 0.7b — done
+Diff review written to `docs/inventory/changes-since-2026-09-30.md`; four inventories corrected in
+place (each says "Corrected 2026-10-02"); `docs/PARITY.md` created with 10 rows.
+
+**Found.** rmi-platform: 21 commits, `f9e4c8c..2422767`, all 2026-09-30 releases v1.60.0–v1.62.2:
+RR Audit (SBIS, #1997, three new SBIS migrations, 11 tables, task `sbis_parse_rr_audit`, catalog
+delete/merge `crosswalk` blocker), CVS Power Query functions, `?section=`, revision token, no-Total
+`sections` view. ADR 0025 accepted (third data class: third-party evidence). SEAM_VERSION still 6;
+no seam added. rmi-sbis-extract: 21 commits; fresh SBIS copy (parts 4,063 → 4,054; coverage CSV
+now 505 rows: 276/49/180; the inventory's "503" and "27 of 503" were stale), power-branch naming,
+bungalow-function vocabulary, chargers/cells proposal. agp-toolbox, pyt, imagery-tiling: no commits,
+so the GIS inventories stand. Issues: 758 (114 open, 644 closed), new #2023, #2026, #2029;
+#1981 became its own project (rmi-civ-viewer, Azure, client-hosted) which overtakes PROPOSAL R-8.
+
+**For 0.8** (list in the changes file §4): ADR 0025 third data class; catalog blocker registry;
+catalog figures for §7; CVS published-view contract and #2023/#2026; #2029 vs §9.2 (what a TIVS
+snapshot freezes); R-8 rewrite; PARITY mechanism; nav declared outside the manifest.
+
+**Where I stopped / not checked.** Done in full. Not checked: PR bodies, release-note text beyond
+headers, #1236's 194 comments, production figures. Discrepancy to know: `catalog/README.md`'s SBIS
+coverage table (501 rows) is behind `sbis_coverage.csv` (505); I cited the CSV. I did not edit
+`PROPOSAL.md` or the three GIS inventories. The PARITY seed omits changes before 2026-09-30
+(v1.59.x), which the inventories already cover. Next: 0.8 (heavy), behind the architecture
+checkpoint if that is still unapproved.

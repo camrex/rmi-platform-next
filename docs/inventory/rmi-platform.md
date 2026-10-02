@@ -1,7 +1,8 @@
 # RMI Platform Inventory
 
 **Repository**: `~/sources/rmi-platform`  
-**Status**: Live in production at `apps.rmigis.cloud` — version 1.59.1  
+**Status**: Live in production at `apps.rmigis.cloud` — version 1.62.2 (as of 2026-09-30)  
+**Corrected 2026-10-02 (task 0.7b)**: written against v1.59.1; version, ADR range, Alembic summary, SBIS (RR Audit) and CVS (Power Query) updated. See `changes-since-2026-09-30.md`.  
 **Tech stack**: Python 3.12, FastAPI, PostgreSQL (schema-per-module), Redis (ARQ worker), HTMX + server-rendered HTML (htpy), ArcGIS Enterprise Portal OAuth  
 **Deployment**: AWS Lightsail container, one image (api/worker dual entrypoint), Docker Compose locally
 
@@ -36,7 +37,7 @@ deploy/
   └─ db_backup.sh, db_restore.sh
 scripts/                   # Operational helpers (alembic_drift.py, roadmap.py, standup.py, etc.)
 docs/
-  ├─ adr/                  # Architecture Decision Records (0001–0024): settled decisions
+  ├─ adr/                  # Architecture Decision Records (0001–0025): settled decisions
   ├─ planning/             # Roadmap, release notes, owner rulings
   └─ DEPLOYMENT.md         # Deployment procedures
 tools/
@@ -147,6 +148,7 @@ rmi-platform.code-workspace   # VS Code multi-folder layout
 - `CatalogItem`: equipment library (materials, labor, cost)
 - `Cost`: project price list per item
 - Equipment, batteries, generators, detectors, crossings, etc. (asset families)
+- **RR Audit** (added v1.60.0, #1997; ADR 0025): UP's Signal Asset Audit held *beside* the inventory as third-party evidence, never written into it. Models in `rr_audit/models.py`, `crosswalk_models.py`, `pairing_models.py`: `RrAuditImport`, `Cabin`, `Chassis`, `Module`, `Family` (+`FamilyModel`, `FamilyItem`, `CoverageOverride`), `Pairing`, `Disposition`, `Decision`. `FamilyItem.equipment_catalog_id` is a RESTRICT reference, so catalog delete/merge gained a `crosswalk` blocker.
 
 **Key Routes** (`web/`):
 - `/sbis/bungalows` — list + detail/edit; map view
@@ -156,11 +158,13 @@ rmi-platform.code-workspace   # VS Code multi-folder layout
 - `/sbis/reconcile` — GIS vs. inventory comparison (read-only, identifies unsynced changes)
 - `/sbis/summary` — project dashboard (count roll-ups)
 - `/sbis/export` — xlsx + Power Query templates
+- `/sbis/rr-audit` — Imports, cabins, crosswalk, pairing, comparison, decisions (`web/rr_audit_*.py`, admin tier; nav entry is in `web/layout.py`, not the manifest)
 - `/sbis/settings` — display order, naming, GIS field mapping
 
 **Background Jobs** (`composition.py` → `register_sbis_sync_hooks()`):
 - `BUNGALOW_SYNC_HALVES`: two audit-isolated adoption hooks after GIS sync (#879)
 - `ASSET_INCLUDE_HOOKS`: per-asset-family adoption (turnouts, crossings, etc.) mirrors include flags after their dataset syncs (#901)
+- Worker task `sbis_parse_rr_audit` (parses an uploaded audit workbook; registered in `platform-web/.../worker.py`)
 
 **GIS Slots** (manifests signals, crossings, turnouts, diamonds, derails, generators, crossing_structures, wayside_detectors, wayside_detector_equipment):
 - `bungalow` (required, project dataset): points with bungalow inventory
@@ -284,6 +288,8 @@ rmi-platform.code-workspace   # VS Code multi-folder layout
 - `/cvs/valuations` — run list + detail
 - `/cvs/reference` — unit values, sales groups, factors (admin grid)
 - `/cvs/exports` — Excel round-trip: styled export + validated three-mode import
+- `/cvs/connect` — Power Query help; serves the packaged `.pq` files (`web/powerquery/`: `fnCvsPaged`, `fnCvsView`, `fnCvsSectionGroups`, `CvsView`, `CvsSectionGroupsView`) at `/cvs/connect/powerquery/<name>.pq` (v1.62.1–v1.62.2, #2020/#2025)
+- `/api/v1/cvs/views/<view>` — published views, paged; `?section=1,2,3` applied before the fold; every response carries a `revision` (sync run + reference-table digest + price unit) and pages are read under `session_scope(snapshot=True)`; the `sections` view has no Total row and carries `effective_corridor_factor` and section names. Open: #2023 (revision misses a late commit), #2026 (section groups defined in the platform)
 
 **Calculation Logic** (`valuation/`):
 - Unit normalization, two-sided averaging, ATF (adjustment time factor), factor matching
@@ -383,8 +389,8 @@ nav=[NavContribution(label="Bungalows", path="/sbis/bungalows", icon="home", ord
 
 | Module | Chain | Current | Purpose |
 |--------|-------|---------|---------|
-| platform | `platform/alembic.ini` | 0027 (turnout/wayside split) | Core tables: user, project, audit, access, parties, GIS catalog, tokens, validation |
-| sbis | `modules/sbis/alembic.ini` | Latest (hex IDs) | Bungalows, assets, equipment, catalog, costs |
+| platform | `platform/alembic.ini` | `0043_oid_sequence_indexes` (44 files; corrected 2026-10-02, was "0027") | Core tables: user, project, audit, access, parties, GIS catalog, tokens, validation |
+| sbis | `modules/sbis/alembic.ini` | `5b7d2e9c4a13` `family_group_key` (53 files; RR Audit added three in v1.60.0) | Bungalows, assets, equipment, catalog, costs |
 | civ | `modules/civ/alembic.ini` | Latest | Bookmarks, frame metadata, asset markers, settings |
 | tivs | `modules/tivs/alembic.ini` | Latest | Inventory, costing, RCN, depreciation, valuation runs + assets |
 | cvs | `modules/cvs/alembic.ini` | Latest | Valuation runs, subjects, sales groups, unit values |
@@ -625,7 +631,7 @@ python scripts/alembic_drift.py
 
 ## Version & Production URL
 
-- **Current**: v1.59.1 (as of 2026-09-29)
+- **Current**: v1.62.2 (as of 2026-09-30; was v1.59.1 when first written)
 - **Production**: https://apps.rmigis.cloud
 - **Health**: `/health` (platform core)
 - **Metrics**: `/metrics` (if `RMI_METRICS_TOKEN` set, Prometheus format)

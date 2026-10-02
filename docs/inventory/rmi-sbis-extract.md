@@ -4,6 +4,8 @@
 
 Project repository: ~/sources/rmi-sbis-extract (read-only source).
 
+**Corrected 2026-10-02 (task 0.7b)**: first written at `4caea94` (2026-09-29); re-read to `28d5bfe` (2026-09-30). Fixed: the "503 rows" and "27 of 503" statements, the catalog counts, and the new naming rule, documents and scripts (section "Added since first written" below). See `changes-since-2026-09-30.md` §2.
+
 ---
 
 ## What it does: end-to-end pipeline
@@ -70,7 +72,7 @@ The pipeline produces two things:
 ## Catalog structure and model
 
 ### What the catalog is
-A **single equipment part catalog**, designed to replace / restructure SBIS's `equipment_catalog` (503 rows). One **canonical definition** per physical item, with:
+A **single equipment part catalog**, designed to replace / restructure SBIS's `equipment_catalog` (503 rows on the 2026-09-20 copy; 505 on the 2026-09-30 copy, after SBIS removed 47, added 45 and rewrote 29 between copies). One **canonical definition** per physical item, with:
 - All identifier forms (manufacturer part number, catalog number, railroad tab, railroad reference, competitor part, model designation, stock number).
 - Identity attributes (coil resistance, contact arrangement, polarity, duty, release, contact material, family).
 - Relations (plugs-into base, equivalent-to competitor part, is-part-of assembly).
@@ -153,7 +155,7 @@ A **single equipment part catalog**, designed to replace / restructure SBIS's `e
 ### Implementation status
 - **Data contributed day one**: 569 identifier rows transcribed from Alstom P1457, UP material reference, Siemens cross-reference (`conf/dictionary/`).
 - **Catalog built from**: Alstom 2019 Estimator's Guide (relays p. 181–205; transformers, WIU/VIO, AFTAC II, NVHLC); Alstom P1457 O&M manual (parts catalog, Appendix A); Siemens SIE-RA-CMP-001-18-EN (cross-reference); Hitachi Rail RSE Product Catalog 2024 (US&S lineage); UP's own material reference (Halsted/Harvard sheets); 427 plan sets (identification by drawing evidence).
-- **Parts resolved to manufacturer P/N**: 27 of 503 SBIS rows (via two independent routes that agree on all six tested).
+- **SBIS rows answered by a catalog part**: every one. `catalog/sbis_coverage.csv` (2026-09-30 copy, **505 rows**): 276 held (a number the row states finds a part), 49 declared by hand, 180 "as SBIS wrote it" (part keyed `sbis-<row id>`, no identifier; 95 of them installed in a bungalow). A handful of numbers on 6 rows still find nothing. *(Corrected 2026-10-02: this line said "27 of 503 SBIS rows"; that was an early resolution count, and 503 was the 2026-09-20 copy.)* Catalog size: **4,054 parts, 6,620 identifier values that find a part** (`catalog/README.md:13-14`; was 4,063 / 6,618 before the fresh copy).
 
 ### What it does NOT cover yet
 - Non-relay equipment (rectifiers, batteries, chargers, transformers, WIU/VIO, POR/POK, timers, logic controllers, comms, switch machines, inverters, flashers) — in `Other_Equipment` as prose, needs structured extraction.
@@ -321,7 +323,7 @@ rmi-sbis-extract/
 1. **Relay count per bungalow** (`equipment_instance` with `count` field). Example: `(bungalow="BUNG_1", catalog_row=884, count=38)`. **Source**: relay rosters extracted from drawings (distinct names from circuit sheets) — today at 59% recall, limited by raster sheets.
 2. **Non-relay equipment** (chargers, batteries, rectifiers, transformers, WIU/VIO, etc.) identified by **text matching and prior statistics**. Example: "GCP 4000 Comprehensive Single Track" appears on a plan set → propose at tier Likely.
 3. **Part number corrections** for 27 SBIS catalog rows where the project found manufacturer P/Ns via two independent routes (UP material reference + Alstom guide).
-4. **Equipment catalog replacement** (503 rows become ~300, with identifiers and attributes properly separated). Includes a mapping table for existing instances (old row ID → new rows, noting granularity changes like row 115 → 4 parts).
+4. **Equipment catalog replacement** (503 rows on the old copy, now 505; the "~300" figure is the entry spec's early estimate and is **not re-measured** — battery rows now go to cells, 51 → 21 in the spec; with identifiers and attributes properly separated). Includes a mapping table for existing instances (old row ID → new rows, noting granularity changes like row 115 → 4 parts).
 
 ### Outputs SBIS can produce (with the redesigned catalog)
 1. **Equipment queries**: Find all relays with coil=500 and contact=4FB; find all parts equivalent to Siemens US2:400004.
@@ -380,6 +382,16 @@ rmi-sbis-extract/
 - `docs/PART_JSON_MODEL.md` — draft JSON schema for catalog entries.
 
 ---
+
+## Added since first written (2026-09-29 → 2026-09-30)
+
+- **Fresh SBIS copy** rebuilt in `0d12964`; the build reads the most recent dated snapshot. Rules forced by it: a number shared by rows that name different parts is a *family* and joins nothing; a range written as one cell is not expanded.
+- **Power branch naming**: where a rating is stated the part's name carries it (`Charger, 12 V 20 A, Cragg 20EC-12V`, `src/sbis_extract/catalog/power.py`, 23 parts); one top branch each for charger, arrester, transformer.
+- **Batteries**: the cell is the part, a bank is a count; UP's `B` code names a (cell, count) pair as drawn at that document's date and is corroboration, never the key. Matches rmi-platform v1.59.0's cell model (#124).
+- **Working docs**: `BUNGALOW_FUNCTION.md` (vocabulary for what a bungalow does, each term proved by named evidence, an absent link proves nothing; scored on 382 `Complete` bungalows); `M11_UP_ASSET_AUDIT.md`; `CHARGERS_AND_CELLS_CONSOLIDATED.md` (a proposal, not done: 14 charger rows → 14 + 5 rating-only lines; 22 cell rows → 5 sizes + 8 held); `UP_AUDIT_PLATFORM_HANDOFF.md`.
+- **Snapshot** also pulls `bungalow_external_ref` and `dax_relation` (existing SBIS tables).
+- **Scripts**: `audit_chargers_and_cells.py`, `audit_recorders_and_filters.py`, `derive_bungalow_function.py`, `collect_signal_readings.py`, `prepare_signal_job.py`, `read_safetran_catalog.py`, `read_signal_plans_api.py`, `refresh_prod_copy.sh`, `remote/signal_job.sh`. **Data**: `catalog/classification_review.csv`, `conf/dictionary/battery_banks.tsv`, `safetran_st_relays.tsv`.
+- Owner, 2026-09-29: entries read consistently and carry only the source file and perhaps page, not narratives.
 
 ## Commands (CLI surface in cli.py)
 
