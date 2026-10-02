@@ -1,6 +1,12 @@
+import os
+import sys
+from pathlib import Path
+
+# Add root to sys.path to allow importing from scripts/
+sys.path.append(str(Path(__file__).parents[2]))
+
 import pytest
 import shutil
-from pathlib import Path
 from scripts.check_file_size import check_files
 
 @pytest.fixture
