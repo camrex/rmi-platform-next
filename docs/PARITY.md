@@ -3,8 +3,10 @@
 `rmi-platform` keeps running while the rebuild is made. Each change below shipped in the old
 platform after the inventories were written (2026-09-30) and changes what a user sees, what a
 consumer reads, or what the data is. Before a module's cutover, every row that touches it must be
-**replayed** or marked **not needed**, with the reason. This file is seeded by task 0.7b; task 0.8
-sets the mechanism (a `rebuild:replay` label and a "rebuild impact" line on PRs).
+**replayed** or marked **not needed**, with the reason. This file is seeded by task 0.7b. Mechanism (PROPOSAL §11 risk 1,
+R-14, proposed 2026-10-02): rmi-platform takes only changes needed to complete a valuation; each
+carries the `rebuild:replay` label on its issue and a "Rebuild impact: none / replay / supersedes"
+line in its PR; each issue-snapshot refresh adds labelled issues here.
 
 Status: `open` (not yet decided) · `replay` · `not needed` · `done` (replayed and checked).
 Release dates are 2026-09-30. Source: `~/sources/rmi-platform`.

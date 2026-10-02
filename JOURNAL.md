@@ -275,3 +275,52 @@ coverage table (501 rows) is behind `sbis_coverage.csv` (505); I cited the CSV. 
 `PROPOSAL.md` or the three GIS inventories. The PARITY seed omits changes before 2026-09-30
 (v1.59.x), which the inventories already cover. Next: 0.8 (heavy), behind the architecture
 checkpoint if that is still unapproved.
+
+## 2026-10-02 0.8 — done
+Revised `docs/architecture/PROPOSAL.md` in place for the five 2026-10-02 MISSION entries and the
+0.7b findings. ~6,070 words (0.7 was ~5,400); tightened unchanged prose to stay under 12 pages.
+
+**What changed, by section.**
+- §1/§2: summary rewritten; R-1 now says calculators port unchanged and only their adapters change
+  (sub-modules, child rows, pricing), with per-sub-module fixtures proving numbers.
+- §3.1: core gains units, a monotonic revision counter (#2023), section groups if #2026 is taken.
+  §3.2 manifest example: SBIS requires pricing, RR Audit nav in the manifest, `catalog_refs`.
+- §4: `pricing.price` Ref kind; money crosses as price refs, not copies; new events.
+- §6.1: evidence as third data class (ADR 0025); units vocabulary + `Quantity` (R-11, #1213).
+  §6.2: `capture` part in dataset contracts. **New §6.3** domain + `OTH`/`TBD` + companion text
+  (maps to catalog class / `undecided` / unclassified; existing `OTHER` spelling mapped). **New
+  §6.4** GIS schema-change process (decision-store record, patch beside it, operator rules, GIS admin
+  applies via rmigis-pyt, expand-then-contract, drift check).
+- §7.2: properties defined only by the catalog, never mandatory, one standard value (no per-railroad
+  variants); catalog figures updated (4,054 / 6,620 / 505 rows). §7.3: `track.turnout` +
+  `excluded_length` worked example; domain codes as identifiers. §7.5: SBIS uniqueness corrected to
+  one row per item per bungalow with quantity; "who points at me" registry (RR Audit crosswalk).
+  **New §7.6** vocabulary authority: catalog exports GIS domains through §6.4.
+- **New §7A pricing module**: cost basis only (subject item or class, material/labor, unit, source
+  kind, basis date, scope general/railroad/project), carry-over + override-with-reason, no overwrite,
+  escalation chain to the run's valuation date, valuation logic stays in modules, double pricing
+  removed by construction (#952, `prices_from=SBIS` flags), permissions + source visibility + #261,
+  seeds (2019 Alstom guide, TIVS cost books) and migration of `asset_cost`/`catalog_cost`.
+- §8: module table adds catalog/pricing; RR Audit stays in SBIS. **§8.1** land/sales out of scope,
+  "some love" list for CVS, sales/comparables plug-in path. **New §8.2** TIVS framework + asset
+  sub-modules (source + filter, data deps only, required properties/prices enforced at readiness,
+  exactly-one coverage, turnout/complex trackwork example, era-mixed sources, valuation date).
+  §8.3 reference hub + report production as later modules.
+- §9.2 snapshot freezes valuation date, settings (#2029), sub-module/filter per record, price refs
+  and index values, coverage, frames. §9.3: R-8 overtaken (#1981 is its own project).
+- §10: twelve phases; phase 7 = operator places 26-150 data in `data/`; pricing (8) before SBIS (9);
+  TIVS framework first then sub-modules. §11: risk 1 replaced with `rebuild:replay` label + PR line +
+  PARITY.md (R-14); new risks: pricing grain/migration, filter coverage, vocabulary drift.
+- §12: R-7 split into R-7a catalog / R-7b pricing; added R-11..R-14 and R-13a (empty
+  `to_complex_type`: proposed undecided; today `!= NML` keeps NULLs, `tivs/assets/types.py:84`).
+- `docs/PARITY.md` header now states the mechanism.
+
+**Checked in source this run:** `tivs/assets/turnout.py:320`, `turnout_complex.py:194`,
+`assets/types.py` RowFilter NULL semantics, `assets/exclusions.py`, `assets/cost_tables.py`
+(`prices_from=SBIS`), `costing/models.py` AssetCost, `rcn/pricing.py` CostBook,
+`sbis/costing/models.py` CatalogCost, `valuation/frames.py` STAGES, `rmi_trk_to_complex_type`
+domain, `rmi-sbis-extract/conf/sources.tsv`, issues #952, #1213, #1302.
+**Not verified:** how cleanly cost-book identities map to catalog classes; Survey123 field use.
+
+**Next run should know:** the next PLAN item is behind `CHECKPOINT architecture`; wait for
+`approvals/architecture.md`. After approval, turn §10 into Phase 1 tasks.
