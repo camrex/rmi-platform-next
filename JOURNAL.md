@@ -548,3 +548,11 @@ the earlier housekeeping had fixed for ruff only. Those files now carry type ann
 unchanged), `make check` is green on rmi-nuc (19 tests, both checks), and B1.4 and B1.4b are ticked.
 Lesson for the runner: the gate is only fair once the tree is green, so housekeeping must leave `make
 check` passing, not just one tool.
+
+## 2026-10-02 23:22 UTC B1.5 — runner
+
+Runner: ended without finishing (exit 0), attempt 1; retrying now.
+
+```
+
+```
