@@ -1,11 +1,14 @@
-# Nightly at 01:30 Chicago time: the fleet's boxes are quietest, and the 3090 is free because
-# its owner is asleep. The runner stops by 06:00 on its own.
+# Every 3 hours from 01:30 Chicago time (01:30, 04:30, ... 22:30), operator 2026-10-02: a run that
+# stopped (a busy fleet box, a cloud failure, the router restarting) picks up again within 3 hours
+# instead of waiting for tomorrow night. A fire while a run is still going does nothing (the
+# runner's lock). Spend is bounded by the runner's DAILY_CLOUD cap and the rebuild key's budget,
+# not by how often this fires.
 [Unit]
-Description=rmi-platform rebuild: nightly run
+Description=rmi-platform rebuild: run every 3 hours
 
 [Timer]
-OnCalendar=*-*-* 01:30:00 America/Chicago
-RandomizedDelaySec=10m
+OnCalendar=*-*-* 01/3:30:00 America/Chicago
+RandomizedDelaySec=5m
 Persistent=false
 
 [Install]

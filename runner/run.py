@@ -4,12 +4,15 @@
     python3 runner/run.py            # what the nightly timer runs
     python3 runner/run.py --dry-run  # say what the next task is and stop
 
-Per run: refresh the read-only source clones, pull this repo, then up to MAX_TASKS times take
-the first unticked task in PLAN.md that is not behind an unapproved CHECKPOINT, run Pi on it
-with the model its tier names, push the result. It stops early, and waits for the next run,
-when a tier is unavailable (its fleet box is busy), the router refuses (budget spent), a task
-fails, or the wall-clock budget for the night is used up. It never retries a failure in the
-same run, and it marks a task blocked after MAX_ATTEMPTS failed runs.
+Per run: refresh the read-only source clones, pull this repo, then repeatedly take the first
+unticked task in PLAN.md that is not behind an unapproved CHECKPOINT, run Pi on it with the
+model its tier names, and push the result. Fleet (local) tasks cost nothing and run until the
+time budget. Cloud tasks go in batches of MAX_TASKS; after each batch the run re-pulls and
+chains into the next one, until DAILY_CLOUD cloud tasks have run today (Chicago date). It stops,
+and waits for the next timer fire (every 3 hours), at a checkpoint, when a tier is unavailable
+(its fleet box is busy), when the router refuses (budget spent), on a cloud task's failure, or
+when the time budget is used up. A local failure is retried at once and escalated after
+ESCALATE_AFTER; a task is marked blocked after MAX_ATTEMPTS failures.
 
 Standard library only. Everything it does is logged to ~/logs/, and summarized in JOURNAL.md
 when a task ends without the agent doing so.
@@ -48,9 +51,10 @@ TIERS = {
     "standard": "cloud-standard",
     "heavy": "cloud-heavy",
 }
-MAX_TASKS = 3                 # per run
+MAX_TASKS = 3                 # cloud tasks per batch; a run chains batches (operator, 2026-10-02)
+DAILY_CLOUD = 8               # cloud tasks per Chicago day, escalations included: the spend governor
 TASK_TIMEOUT_S = 2 * 3600     # one task
-RUN_BUDGET_S = 4 * 3600 + 1800  # the whole night: 01:30 start, done by 06:00
+RUN_BUDGET_S = 4 * 3600 + 1800  # one run; the 3-hourly timer's next fire no-ops on the lock if still going
 MAX_ATTEMPTS = 3              # failed runs before a task is marked blocked
 
 TASK_RE = re.compile(r"^- \[( |x)\] (\S+) \[(\w+)\] (.+)$")
@@ -380,6 +384,20 @@ def load_state() -> dict:
         return {"attempts": {}}
 
 
+def chicago_date() -> str:
+    from zoneinfo import ZoneInfo
+    return dt.datetime.now(ZoneInfo("America/Chicago")).strftime("%Y-%m-%d")
+
+
+def cloud_today(s: dict) -> int:
+    c = s.get("cloud", {})
+    return c.get("n", 0) if c.get("date") == chicago_date() else 0
+
+
+def count_cloud(s: dict) -> None:
+    s["cloud"] = {"date": chicago_date(), "n": cloud_today(s) + 1}
+
+
 def save_state(s: dict) -> None:
     STATE.parent.mkdir(parents=True, exist_ok=True)
     STATE.write_text(json.dumps(s, indent=2))
@@ -406,14 +424,23 @@ def main() -> int:
         refresh_issues(log)
     state = load_state()
 
-    # Slots bound cloud work per run. A failed LOCAL attempt is free, so it uses no slot and does
-    # not end the run: it is retried at once, and after ESCALATE_AFTER failures re-tagged to a cloud
-    # tier and retried at once too (operator, 2026-10-02: "should not wait for the next time
-    # slot"). An escalated retry always runs, even with no slot left. Cloud failures, an
-    # unreachable router and a spent budget still end the run. `guard` bounds the loop.
-    slots, guard, owed = a.max_tasks, a.max_tasks + 2 * (ESCALATE_AFTER + 1) + 2, False
-    while (slots > 0 or owed) and guard > 0:
+    # Slots count cloud tasks in a batch; local tasks, done or failed, use none (operator,
+    # 2026-10-02: free work should not wait for Run now). A failed local attempt is retried at
+    # once, and after ESCALATE_AFTER failures re-tagged to a cloud tier and retried at once too.
+    # An escalated retry runs even with no slot left. When a batch's slots are spent the run
+    # re-pulls and chains into another batch, until DAILY_CLOUD cloud tasks have run today.
+    # Cloud failures, an unreachable router, a spent budget and a checkpoint end the run; the
+    # time budget bounds it; `guard` is a backstop against a loop.
+    slots, guard, owed = a.max_tasks, 200, False
+    while guard > 0:
         guard -= 1
+        if slots <= 0 and not owed and not a.dry_run:
+            if cloud_today(state) >= DAILY_CLOUD:
+                log(f"daily cloud cap reached ({DAILY_CLOUD}); stopping until tomorrow")
+                break
+            log(f"batch of {a.max_tasks} cloud tasks done; chaining into the next batch")
+            sync_work(log)
+            slots = a.max_tasks
         plan = (WORK / "PLAN.md").read_text()
         task, why = next_task(plan, approvals())
         if not task:
@@ -427,15 +454,19 @@ def main() -> int:
         if a.dry_run:
             log(f"next: {task['id']} [{task['tier']} -> {TIERS[task['tier']]}] {task['what']}")
             return 0
-        if slots <= 0 and not owed:
-            break
         owed = False
 
         left = RUN_BUDGET_S - (time.monotonic() - started)
         if left < 600:
-            log("night's time budget used up")
+            log("run's time budget used up")
             break
         local = task["tier"] in LOCAL_TIERS
+        if not local:
+            if cloud_today(state) >= DAILY_CLOUD:
+                log(f"daily cloud cap reached ({DAILY_CLOUD}); {task['id']} waits for tomorrow")
+                break
+            count_cloud(state)
+            save_state(state)
         code, out = run_pi(task, log, int(min(TASK_TIMEOUT_S, left)))
         plan_after = (WORK / "PLAN.md").read_text()
         tail = "\n".join(out.strip().splitlines()[-6:])
@@ -446,7 +477,8 @@ def main() -> int:
                 state["attempts"].pop(task["id"], None)
                 save_state(state)
                 commit_and_push(f"{task['id']}: {task['what'][:60]}", log)
-                slots -= 1
+                if not local:
+                    slots -= 1
                 continue
             n = state["attempts"].get(task["id"], 0) + 1
             plan_new, note = after_failure(untick(plan_after, task["id"]), task, n)

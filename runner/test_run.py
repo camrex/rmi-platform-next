@@ -1,4 +1,5 @@
 """The runner's plan parsing. python3 -m unittest discover runner"""
+import json
 import pathlib
 import sys
 import unittest
@@ -141,7 +142,7 @@ if __name__ == "__main__":
 class Loop(unittest.TestCase):
     """main() end to end with the edges replaced: no git, no Pi, no network."""
 
-    def _run(self, plan_text, outcomes):
+    def _run(self, plan_text, outcomes, extra=(), state=None):
         import tempfile
         from pathlib import Path
         d = Path(tempfile.mkdtemp())
@@ -162,10 +163,12 @@ class Loop(unittest.TestCase):
         try:
             run.HOME, run.WORK, run.LOGS = d, d / "work", d / "logs"
             run.STATE = d / "state.json"
+            if state is not None:
+                run.STATE.write_text(json.dumps(state))
             run.sync_work = run.refresh_sources = run.refresh_issues = lambda log: None
             run.commit_and_push = lambda msg, log: None
             run.run_pi, run.verify, run.approvals = fake_pi, (lambda log: (True, "")), (lambda: set())
-            argv, sys.argv = sys.argv, ["run.py"]
+            argv, sys.argv = sys.argv, ["run.py"] + list(extra)
             try:
                 run.main()
             finally:
@@ -187,3 +190,25 @@ class Loop(unittest.TestCase):
         calls, plan, _ = self._run("- [ ] C1 [standard] a -> x\n- [ ] C2 [light] b -> y\n", [False, True])
         self.assertEqual(calls, [("C1", "standard")])
         self.assertIn("- [ ] C1 [standard]", plan)
+
+
+class Chain(unittest.TestCase):
+    _run = Loop._run
+
+    def test_local_successes_use_no_slot(self):
+        plan = "".join(f"- [ ] L{i} [drudge] t{i} -> x\n" for i in range(5)) + "- [ ] C1 [light] c -> y\n"
+        calls, plan_after, _ = self._run(plan, [True] * 6, extra=["--max-tasks", "1"])
+        self.assertEqual(len(calls), 6)
+        self.assertIn("- [x] C1 [light]", plan_after)
+
+    def test_cloud_batches_chain_until_the_daily_cap(self):
+        plan = "".join(f"- [ ] C{i} [light] t{i} -> x\n" for i in range(12))
+        calls, plan_after, _ = self._run(plan, [True] * 12, extra=["--max-tasks", "3"])
+        self.assertEqual(len(calls), run.DAILY_CLOUD)
+        self.assertIn(f"- [ ] C{run.DAILY_CLOUD} [light]", plan_after)
+
+    def test_cap_carries_across_runs_the_same_day(self):
+        plan = "- [ ] C1 [light] a -> x\n- [ ] L1 [drudge] b -> y\n"
+        state = {"attempts": {}, "cloud": {"date": run.chicago_date(), "n": run.DAILY_CLOUD}}
+        calls, _, _ = self._run(plan, [True, True], state=state)
+        self.assertEqual(calls, [])
