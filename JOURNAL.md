@@ -689,3 +689,22 @@ Runner: ended without finishing (exit 0), attempt 2; re-tagged from coder to sta
 ```
 
 ```
+
+## 2026-10-02 B1.9 — done
+
+**What I did**: rewrote `core/src/rmi_core/resolve.py` (an untested draft from the failed local runs
+was there; I replaced it) and added `core/tests/test_resolve.py` (14 tests). `make check` green (88 tests).
+- `resolve(manifests, *, core_revision=None) -> Resolution(load_order, disabled, providers)`; pure.
+- Rejects, with one `ResolutionError` (a `ValueError`; `.problems` lists every reason): duplicate
+  module keys, duplicate seam offers, `requires` unsatisfied ("module 'shed' requires seam
+  'parts.items' '>=1,<2', but no loaded module offers it" / "...but 'parts' offers version '2.0'"),
+  `core_revision` range not containing the core's (only checked when the caller passes it), cycles
+  (message names the modules left in the cycle).
+- `uses` absent or out of range -> `DisabledFeature(module, seam, range, reason)`; the module still
+  loads; an unsatisfied `uses` adds no edge, a satisfied one orders provider first and can form a cycle.
+- Order: providers first, ties by key, so it does not depend on input order.
+
+**Next run (B1.10) should know**: `load_modules()` should call `resolve(manifests, core_revision=...)`
+and keep `Resolution.disabled` for `describe` (B1.11) and the contract test (B1.14); `providers`
+maps seam name -> module key. Duplicate seam offers cannot be built from one manifest (the model
+forces the `<key>.` prefix), so that branch is defensive and untested.
