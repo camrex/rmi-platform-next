@@ -539,3 +539,12 @@ Runner: the task was ticked but `make check` failed, so it is un-ticked (attempt
 43 errors, 0 warnings, 0 informations
 make: *** [Makefile:23: typecheck] Error 1
 ```
+
+## 2026-10-02 23:25 UTC B1.4, B1.4b — operator housekeeping
+
+B1.4 (Sonnet, after two failed local attempts) was correct and passed ruff and pyright strict on its own
+files; the runner's new `make check` gate un-ticked it for pyright errors left in B1.2/B1.3's files, which
+the earlier housekeeping had fixed for ruff only. Those files now carry type annotations (behaviour
+unchanged), `make check` is green on rmi-nuc (19 tests, both checks), and B1.4 and B1.4b are ticked.
+Lesson for the runner: the gate is only fair once the tree is green, so housekeeping must leave `make
+check` passing, not just one tool.
