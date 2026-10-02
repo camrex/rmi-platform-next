@@ -639,3 +639,37 @@ Runner: ended without finishing (exit 0), attempt 1; retrying now.
 ## 2026-10-02 B1.7 — done
 
 Implemented Ref type in core/src/rmi_core/refs.py and tests in core/tests/test_refs.py. Supported gis:, oid:, and module.kind: forms.
+
+## 2026-10-02 B1.8 — done
+
+**What I did**: the module contract.
+- `core/src/rmi_core/manifest.py`: `ModuleManifest` (pydantic `BaseModel`, strict, `extra="forbid"`,
+  frozen) and its parts as pydantic dataclasses so manifests read as in PROPOSAL §3.2
+  (`SeamRef("catalog.items", ">=1,<2")`): `SeamRef` (with `accepts(version)`), `SeamImpl`, `Nav`,
+  `Permissions` (facets, capabilities, `AccessKey`s for "a key that is a permission, not a place",
+  `always_on`), `Slot` (identity `globalid|objectid`, `writable_fields`), `Job` (optional 5-field
+  cron), `On`, `LinkKind` with identity `GisFeature | OidFrame | Owned` (discriminated), `Relation`,
+  `Card` (`grant="host"|"own"`), `CatalogRef`; `Router` protocol (anything with `routes`).
+  Version ranges: `parse_version`, `parse_range`, `range_contains` (clauses `>= > <= < ==`, AND).
+  Lists are stored as tuples; callables are excluded from the JSON dump and shown by dotted name
+  (`Job.name`, `SeamImpl.impl_name`, ...) so `describe` (B1.11) can dump `model_dump(mode="json")`.
+- Single-manifest checks in the model: reserved keys, own names prefixed `<key>.`, paths under
+  `/<key>/`, duplicates, seam both required and used, consuming its own seam, facets used by nav or
+  links must be declared, `writable_fields` needs capability `gis.write_back`, `db_schema` and
+  `migrations` together, `catalog_refs` tables inside the module's schema.
+- `core/tests/test_manifest.py`: 37 tests (good manifest, minimal manifest, JSON form, JSON Schema,
+  ranges good/bad, 19 bad manifests each matched to its message, bad parts). Invented module keys
+  (`shed`, `parts`, `planner`, `viewer`) because core must not name real ones.
+- `docs/CONTRACT.md`: one page, each field, what the module gets only by declaring it.
+- `make check` green (74 tests, pyright strict clean).
+
+**Deviations from the §3.2 sketch**: `schema=` is `db_schema=` (pydantic `BaseModel.schema` clash);
+`accent` is a closed `Literal` list; `cards_offered` added (the sketch only had `cards_hosted`;
+§4.4 needs the offering side); settings keys / config surfaces left for B2 (noted in CONTRACT.md).
+
+**Found**: the Makefile's `check-size` target has no recipe, so the 500-line cap never runs in
+`make check`; added B1.20b [drudge] to fix it.
+
+**Next run (B1.9) should know**: cross-manifest checks (unsatisfied `requires`, `uses` reasons,
+duplicate keys, cycles, `core_revision`) belong in `resolve.py`; use `SeamRef.accepts(version)` and
+`SeamImpl.version`.
