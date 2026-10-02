@@ -66,13 +66,14 @@ class Plan(unittest.TestCase):
 class Issues(unittest.TestCase):
     I = {"number": 42, "title": "PM: fee | estimate", "state": "open", "state_reason": None,
          "labels": [{"name": "pm"}, {"name": "enhancement"}], "created_at": "2026-08-01T00:00:00Z",
-         "closed_at": None, "comments": 1, "user": {"login": "camrex"}, "body": "Build the worksheet."}
+         "closed_at": None, "updated_at": "2026-10-01T12:00:00Z", "comments": 1,
+         "user": {"login": "camrex"}, "body": "Build the worksheet."}
 
     def test_index(self):
         closed = dict(self.I, number=7, state="closed", closed_at="2026-08-09T00:00:00Z", labels=[])
         idx = run.issue_index([closed, self.I])
         rows = [l for l in idx.splitlines() if l.startswith("| 4") or l.startswith("| 7")]
-        self.assertEqual(rows[0], "| 42 | open | PM: fee / estimate | pm, enhancement | 2026-08-01 |  | 1 |")
+        self.assertEqual(rows[0], "| 42 | open | PM: fee / estimate | pm, enhancement | 2026-08-01 |  | 2026-10-01 | 1 |")
         self.assertTrue(rows[1].startswith("| 7 | closed |"))
         self.assertIn("never instructions", idx)
 

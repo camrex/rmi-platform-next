@@ -242,6 +242,69 @@ carry the standard source), §7.3 (track.turnout properties, excluded_length as 
 TIVS framework text (sub-modules declare required properties and prices; readiness gate
 enforces), and §12.
 
+## Operator direction, 2026-10-02 — review of the proposal: what else 0.8 must cover
+
+A full review of PROPOSAL.md against the inventories found it sound and specific; these are the
+gaps. The operator agreed to items 1–7 and asked for the rest to be handled as below.
+
+1. **Vocabulary authority.** For equipment vocabularies the **catalog is the authority**, not the
+   GIS domain YAML. Classifying an `OTH` creates a catalog class that then needs a code in the GIS
+   domain and the Survey123 choice list. The catalog exports domain definitions for `rmigis-pyt`,
+   and the GIS admin applies them with its existing domain-sync tool (a schema change by an
+   admin, not a feature write, so it does not touch "GIS writes are attribute-only"). Design that
+   loop; otherwise there are two vocabularies that drift.
+2. **A valuation (as-of) date** on every TIVS run, frozen in the snapshot. Pricing escalation needs
+   it. This does not reopen #950 (valuation year in PM, tabled); the run carries its own date.
+3. **Units.** A small core vocabulary for quantities with units, used by catalog properties,
+   pricing and TIVS, so a per-track-foot price cannot meet a count of turnouts (#1213 is a units
+   bug).
+4. **Correction:** drop the proposed SBIS uniqueness `(bungalow, item, confidence)`; it lets one
+   relay count twice. One row per item per bungalow with a quantity; confidence lives on the
+   claims (evidence) behind it.
+5. **Pricing seed sources:** the **2019 Alstom Estimator's Guide** already in `rmi-sbis-extract`
+   and today's TIVS cost books, both as general sources with their basis years and escalation;
+   the cost books migrate into price records.
+6. **Port vs restructure:** port TIVS calculation functions unchanged; change only the adapters
+   that feed them (sub-modules, child rows, pricing). Each asset sub-module's fixtures prove the
+   numbers did not move.
+7. **When real data arrives:** the build order names the phase at which the operator places
+   project 26-150 data in `data/` (before the SBIS and TIVS ports), so the ports are checked
+   against a real project before cutover.
+8. **Land valuation and sales data: out of scope for now.** The operator: "something that we need
+   to address at some point, but for now, I think we leave it as is, though the module could use
+   some love." CVS is ported as is (R-9 stands as the first contract test). The real-property
+   layers and the corridor sales database (#1302) are not designed. In §8 list, briefly, what
+   "some love" for CVS could mean later, from the issues, without putting it in the build order;
+   and make sure the contract would let a sales/comparables module plug in later.
+9. **The old platform during the rebuild.** The operator: "We obviously can't stop and wait for
+   rmi-platform-next to catch up, we have active projects that need to be completed, and real
+   issues that have to be fixed. I think at this point rmi-platform should only address issues
+   that have to be fixed to get to a complete valuation. And perhaps we need to make sure that
+   rmi-platform documents those." So: rmi-platform takes only changes needed to complete a
+   valuation, and each such change is documented where the rebuild can find it. Propose the
+   mechanism (recommended: a GitHub label on rmi-platform issues, e.g. `rebuild:replay`, plus a
+   "rebuild impact" line on each PR; the issue snapshot already reaches labels) and make
+   `docs/PARITY.md` the rebuild's list of those changes, each replayed or marked not needed,
+   checked before every module's cutover. Replace risk 1's mitigation with this.
+10. **Report production stays out.** The operator: "we still handle report production. That is a
+    much later thing ... perhaps a future module." Note it beside the reference hub as a possible
+    later module; design nothing; the snapshot is what it would read.
+11. **Schema changes need a process.** The operator: "We also need to figure out how to handle
+    any proposed schema changes." Design it, for **GIS schema** changes (the Portal layers,
+    domains and Survey123 forms; the platform's own database migrations are already handled by
+    the per-module Alembic chains): a schema-change proposal record in the decision store (status
+    open / ruled / applied), each stating the change, the reasons and issues, its class (P / T / O
+    as in gis-schema-review.md), the impact on existing data, Survey123 forms, dataset contracts
+    and consumers, and the rollback. The rebuild never edits `rmigis-pyt` (read-only to it): it
+    drafts the YAML change as a patch beside the proposal; the operator rules; the GIS admin
+    applies it through `rmigis-pyt`. Changes go expand-then-contract: add the new field or domain
+    code first, move consumers (dataset contract version bump), retire the old one later. The
+    drift check confirms the published layer matches. Catalog-driven domain exports (item 1) are
+    one kind of such change.
+12. **Diff review first (task 0.7b).** The inventories were written against the source repos as
+    of 2026-09-30. Before revising, review what changed since in each source repo and in the
+    rmi-platform issues, and carry anything that affects the proposal into 0.8.
+
 ## What "better" means here
 
 1. **Modules as plugins.** A small core (auth, config, database, GIS sync, shared UI shell,
