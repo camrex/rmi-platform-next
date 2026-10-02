@@ -4,7 +4,7 @@
 export PATH := $(HOME)/.local/bin:$(PATH)
 UV ?= uv
 
-.PHONY: help sync lint format typecheck test check check-size
+.PHONY: help sync lint format typecheck test check check-size check-core-clean
 help:
 	@echo "make sync | lint | format | typecheck | test | check | check-size"
 
@@ -25,7 +25,7 @@ typecheck:
 test:
 	$(UV) run pytest
 
-check-size:
-	$(UV) run python scripts/check_file_size.py
+check-core-clean:
+	$(UV) run python scripts/check_core_clean.py
 
-check: sync lint typecheck test check-size
+check: sync lint typecheck test check-size check-core-clean
