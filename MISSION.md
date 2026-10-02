@@ -166,11 +166,12 @@ What this asks of the revised proposal:
    core: no routes, nav or migration chain per asset type; shared run/asset tables with a
    per-asset declared detail schema.
 2. **Sub-modules depend on data, never on each other.** Rail depends on its primary source
-   (track) and secondary sources (`turnouts_cx`), not on the Turnout sub-module. Facts several
-   asset types need belong below all of them: a turnout's **footprint / exclusion length** is an
-   attribute of the turnout class in the catalog (as a relay's coil resistance is), or a derived
-   field of the dataset contract (§6.2), so Turnout and Rail read one definition (#1414, #1373).
-   Say where each such shared fact lives.
+   (track) and secondary sources (`turnouts_cx`), not on the Turnout sub-module. A turnout's
+   **excluded length** is a property of the turnout class in the **catalog** (as a relay's coil
+   resistance is). The operator, 2026-10-02: "In reality Turnouts never rely on this excluded
+   length, it is just a property of the turnout." Rail reads it from the catalog through the
+   turnout records' class (#1414, #1373). Say where each such fact lives; the default home for
+   a property of a kind of thing is the catalog.
 3. **Every record lands in exactly one asset type.** The framework checks, per source, that the
    sub-module filters are disjoint and exhaustive; a record no filter claims is reported as
    `unassigned` (typed absence), one claimed twice fails the run. This is what makes splitting
@@ -182,6 +183,33 @@ What this asks of the revised proposal:
    valued each record), §10 (phase 8: framework first, then asset sub-modules one at a time,
    turnout and complex trackwork as the worked example), §11 (risk: filter coverage on
    era-mixed data such as the Schema-1/Schema-2 turnout and wayside pairs), §12 (a ruling line).
+
+## Operator direction, 2026-10-02 — track inventory on domains, free text only as the exception (also task 0.8)
+
+> [It] goes to the need to as much as possible start basing the actual inventory of track
+> improvements on not free text but domains. And only allow free text when you aren't sure or
+> it is new. Where you could indicate "Other" or "TBD" in the domain and a free text to either
+> describe or name if new.
+
+What this asks of the revised proposal:
+
+1. **One capture pattern for inventory fields**: a coded domain value, with two reserved codes,
+   **`OTH`** (it is something the domain does not list yet) and **`TBD`** (not determined), and
+   a companion free-text field used only with them, to name or describe the thing. Free text is
+   the deliberate, countable exception, never the default.
+2. **It maps onto what the proposal already has**: a domain value resolves to a catalog class;
+   `TBD` is typed absence `undecided` (§6.1); `OTH` + text is the catalog's unclassified path
+   (§7.4): kept verbatim, queued by frequency, later classified or merged, with every reference
+   following. Domain codes are catalog identifiers (`issuer = rmigis:<domain>`, §7.3), so the
+   GIS domains and the catalog stay one vocabulary, and adding a new code to a domain means
+   adding (or classifying into) a catalog entry.
+3. **For the GIS side, as proposals** (the Portal is not assumed to change, MISSION): the
+   standard for new and revised track-improvement layers and Survey123 forms is domain +
+   `OTH`/`TBD` + companion text; existing free-text and slot fields keep being read through the
+   catalog's token map and dataset contracts, with unmapped text queued, never defaulted.
+   Cross-reference docs/inventory/gis-schema-review.md where it already proposes domains.
+4. **Revise in place**: §6.2 (dataset contracts: reserved codes and companion text), §7.3/§7.4
+   (domains as catalog identifiers; `OTH` feeds the unclassified queue), and a line in §12.
 
 ## What "better" means here
 
