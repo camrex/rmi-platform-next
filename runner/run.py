@@ -119,6 +119,30 @@ def untick(plan: str, tid: str) -> str:
     return "\n".join(out) + "\n"
 
 
+def retag(plan: str, tid: str, tier: str) -> str:
+    """Change an unticked task's tier tag. Pure."""
+    out = []
+    for l in plan.splitlines():
+        m = TASK_RE.match(l.strip())
+        if m and m.group(2) == tid and m.group(1) == " ":
+            l = f"- [ ] {tid} [{tier}] {m.group(4)}"
+        out.append(l)
+    return "\n".join(out) + "\n"
+
+
+def after_failure(plan: str, task: dict, attempts: int) -> tuple[str, str | None]:
+    """What a failed attempt does to the plan: (new plan, note), where note says what changed.
+    A local task escalates to a cloud tier after ESCALATE_AFTER failures; any task is marked
+    BLOCKED after MAX_ATTEMPTS. Pure."""
+    tid, tier = task["id"], task["tier"]
+    if tier in ESCALATE and attempts >= ESCALATE_AFTER:
+        new = ESCALATE[tier]
+        return retag(plan, tid, new), f"re-tagged from {tier} to {new} after {attempts} failed local runs; attempts reset"
+    if attempts >= MAX_ATTEMPTS:
+        return mark_blocked(plan, tid, f"{attempts} failed runs"), "marked BLOCKED for the operator"
+    return plan, None
+
+
 def mark_blocked(plan: str, tid: str, why: str) -> str:
     out = []
     for l in plan.splitlines():
@@ -274,6 +298,11 @@ def commit_and_push(msg: str, log: Log) -> None:
 
 
 LOCAL_TIERS = {"drudge", "coder"}
+# A local task that fails this many runs is re-tagged to a cloud tier and retried, rather than
+# being marked BLOCKED and skipped (operator, 2026-10-02). drudge (8k) goes to the cheapest
+# cloud tier, coder (16k) to standard. The re-tag is journalled so cloud spend stays visible.
+ESCALATE = {"drudge": "light", "coder": "standard"}
+ESCALATE_AFTER = 2
 
 
 def build_prompt(task: dict, today: str) -> str:
@@ -403,13 +432,18 @@ def main() -> int:
         if code == 0 and is_ticked(plan_after, task["id"]):
             ok, check_out = verify(log)
             if not ok:
-                (WORK / "PLAN.md").write_text(untick(plan_after, task["id"]))
                 n = state["attempts"].get(task["id"], 0) + 1
-                state["attempts"][task["id"]] = n
+                plan_new, note = after_failure(untick(plan_after, task["id"]), task, n)
+                (WORK / "PLAN.md").write_text(plan_new)
+                if note and note.startswith("re-tagged"):
+                    state["attempts"].pop(task["id"], None)
+                else:
+                    state["attempts"][task["id"]] = n
                 save_state(state)
                 journal(f"## {utc()} {task['id']} — runner\n\nRunner: the task was ticked but "
-                        f"`make check` failed, so it is un-ticked (attempt {n} of {MAX_ATTEMPTS}). "
-                        f"The next attempt starts from this commit.\n\n```\n{check_out}\n```")
+                        f"`make check` failed, so it is un-ticked (attempt {n})"
+                        f"{'; ' + note if note else ''}. The next attempt starts from this commit."
+                        f"\n\n```\n{check_out}\n```")
                 commit_and_push(f"{task['id']}: runner un-ticked (make check failed)", log)
                 return 0
             state["attempts"].pop(task["id"], None)
@@ -426,11 +460,15 @@ def main() -> int:
             reason = "the router could not be reached (restarting?); not counted as a failed attempt"
         else:
             n = state["attempts"].get(task["id"], 0) + 1
-            state["attempts"][task["id"]] = n
-            reason = f"ended without finishing (exit {code}), attempt {n} of {MAX_ATTEMPTS}"
-            if n >= MAX_ATTEMPTS:
-                (WORK / "PLAN.md").write_text(mark_blocked(plan_after, task["id"], f"{n} failed runs"))
-                reason += "; marked BLOCKED for the operator"
+            reason = f"ended without finishing (exit {code}), attempt {n}"
+            plan_new, note = after_failure(plan_after, task, n)
+            if note:
+                (WORK / "PLAN.md").write_text(plan_new)
+                reason += "; " + note
+            if note and note.startswith("re-tagged"):
+                state["attempts"].pop(task["id"], None)
+            else:
+                state["attempts"][task["id"]] = n
         save_state(state)
         journal(f"## {utc()} {task['id']} — runner\n\nRunner: {reason}.\n\n```\n{tail}\n```")
         commit_and_push(f"{task['id']}: runner note ({reason[:50]})", log)

@@ -56,6 +56,21 @@ class Plan(unittest.TestCase):
         blocked = run.mark_blocked(PLAN, "0.2", "3 failed runs")
         self.assertIn("BLOCKED", run.untick(blocked, "0.2"))   # a BLOCKED line stays as it is
 
+    def test_local_task_escalates_then_cloud_blocks(self):
+        plan = "- [ ] B1.4 [coder] module isolation -> x\n- [ ] B1.5 [light] y -> z\n"
+        t = {"id": "B1.4", "tier": "coder"}
+        same, note = run.after_failure(plan, t, 1)
+        self.assertEqual((same, note), (plan, None))
+        up, note = run.after_failure(plan, t, 2)
+        self.assertIn("- [ ] B1.4 [standard] module isolation", up)
+        self.assertTrue(note.startswith("re-tagged from coder to standard"))
+        self.assertEqual(run.next_task(up, set())[0]["tier"], "standard")
+        d, note = run.after_failure("- [ ] D1 [drudge] fmt -> a\n", {"id": "D1", "tier": "drudge"}, 2)
+        self.assertIn("[light]", d)
+        c, note = run.after_failure(up, {"id": "B1.4", "tier": "standard"}, 3)
+        self.assertIn("BLOCKED", c)
+        self.assertEqual(note, "marked BLOCKED for the operator")
+
     def test_failure_patterns(self):
         self.assertTrue(run.UNAVAILABLE.search("400 Invalid model name passed in model=fleet-coder"))
         self.assertTrue(run.BUDGET.search("Budget has been exceeded! Current cost: 50.1"))
