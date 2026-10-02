@@ -37,7 +37,7 @@ ships its own test and leaves `make check` green. If a tool or service a task ne
 box, mark the task blocked and say exactly what is missing; do not improvise another stack.
 
 - [x] B1.1 [standard] Toolchain: find what this box has (python3 is 3.14; ADR 0002 says 3.12; check uv, ensurepip, docker, postgres), choose uv workspace or plain venv, create root `pyproject.toml` (ruff, pyright, pytest), `Makefile` with `make check`, `.gitignore`, one trivial test; list anything missing for the operator. -> pyproject.toml, Makefile, docs/TOOLCHAIN.md
-- [ ] B1.2 [coder] File-size check: fail any `.py` over 500 lines under core/, contracts/, modules/, scripts/; wire into `make check`. -> scripts/check_file_size.py, tests/scripts/test_check_file_size.py
+- [x] B1.2 [coder] File-size check: fail any `.py` over 500 lines under core/, contracts/, modules/, scripts/; wire into `make check`. -> scripts/check_file_size.py, tests/scripts/test_check_file_size.py
 - [ ] B1.3 [coder] Core-is-clean check: fail if anything under `core/` names a module key (`sbis`, `civ`, `cvs`, `tivs`, `pm`, `pmfee`, `pmfin`, plus every directory in `modules/`); wire into `make check`. -> scripts/check_core_clean.py, tests/scripts/test_check_core_clean.py
 - [ ] B1.4 [coder] Module-isolation check: given a base git ref and `--module <key>`, fail if the diff touches anything outside `modules/<key>/`, `contracts/<key>_*` and `docs/`; wire into the CI workflow. -> scripts/check_module_isolation.py, tests/scripts/test_check_module_isolation.py
 - [ ] B1.5 [drudge] GitHub Actions workflow running `make check` on push and pull request (Python and tool versions from docs/TOOLCHAIN.md). -> .github/workflows/ci.yml

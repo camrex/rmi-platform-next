@@ -476,3 +476,7 @@ Runner: ended without finishing (exit 0), attempt 1 of 3.
 ```
 
 ```
+
+## 2026-10-02 B1.2 — done
+
+Implemented file size check for .py files (>500 lines) in core/, contracts/, modules/, and scripts/. Added scripts/check_file_size.py and tests/scripts/test_check_file_size.py, and integrated it into make check.

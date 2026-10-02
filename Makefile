@@ -4,9 +4,9 @@
 export PATH := $(HOME)/.local/bin:$(PATH)
 UV ?= uv
 
-.PHONY: help sync lint format typecheck test check
+.PHONY: help sync lint format typecheck test check check-size
 help:
-	@echo "make sync | lint | format | typecheck | test | check"
+	@echo "make sync | lint | format | typecheck | test | check | check-size"
 
 sync:
 	$(UV) sync --python 3.12
@@ -25,4 +25,7 @@ typecheck:
 test:
 	$(UV) run pytest
 
-check: sync lint typecheck test
+check-size:
+	$(UV) run python scripts/check_file_size.py
+
+check: sync lint typecheck test check-size
