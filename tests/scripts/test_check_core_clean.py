@@ -6,7 +6,7 @@ from pathlib import Path
 
 
 class TestCoreClean(unittest.TestCase):
-    def run_check_script(self, temp_dir):
+    def run_check_script(self, temp_dir: str) -> subprocess.CompletedProcess[str]:
         # Run the script using the current python interpreter
         # We need to pass the temp_dir as the working directory
         result = subprocess.run(
@@ -14,7 +14,7 @@ class TestCoreClean(unittest.TestCase):
         )
         return result
 
-    def test_core_clean_passes(self):
+    def test_core_clean_passes(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             tmp_path = Path(tmpdir)
             (tmp_path / "scripts").mkdir()
@@ -32,7 +32,7 @@ class TestCoreClean(unittest.TestCase):
             self.assertEqual(res.returncode, 0)
             self.assertIn("Core-is-clean check passed", res.stdout)
 
-    def test_core_clean_fails_with_explicit_key(self):
+    def test_core_clean_fails_with_explicit_key(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             tmp_path = Path(tmpdir)
             (tmp_path / "scripts").mkdir()
@@ -49,7 +49,7 @@ class TestCoreClean(unittest.TestCase):
             self.assertIn("Core-is-clean check failed", res.stdout)
             self.assertIn("core/sbis.py", res.stdout)
 
-    def test_core_clean_fails_with_module_dir_key(self):
+    def test_core_clean_fails_with_module_dir_key(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             tmp_path = Path(tmpdir)
             (tmp_path / "scripts").mkdir()

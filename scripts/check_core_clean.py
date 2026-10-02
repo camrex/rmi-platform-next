@@ -1,8 +1,10 @@
+"""Fail if anything under core/ names a module key (PROPOSAL §3.1)."""
+
 import sys
 from pathlib import Path
 
 
-def main():
+def main() -> None:
     module_keys = {"sbis", "civ", "cvs", "tivs", "pm", "pmfee", "pmfin"}
 
     # Add directories in modules/ to module_keys
@@ -17,7 +19,7 @@ def main():
         print(f"Error: core directory not found at {core_dir.absolute()}")
         sys.exit(1)
 
-    found_violations = []
+    found_violations: list[str] = []
     for path in core_dir.rglob("*"):
         name = path.stem if path.is_file() else path.name
         if name in module_keys:
