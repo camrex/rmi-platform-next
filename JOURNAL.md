@@ -416,3 +416,30 @@ record, no proposals. Do not copy client-identifying content into the repo.
 ## 2026-10-02 22:17 UTC runner — waiting
 
 Runner: waiting at checkpoint 'architecture' (approvals/architecture.md missing).
+
+## 2026-10-02 1.0 — done
+**PROPOSAL.md.** Read `approvals/architecture.md`. Replaced §12 ("for the operator to rule on") with
+"Operator rulings": every R-n marked ruled with his answer (all accepted; R-8 noted as overtaken; R-6
+with the measured slot figures; R-7b keep scope general/railroad/project; R-12 with `OTHER`→`OTH`,
+`UNK`/`UNKNOWN`→`TBD`, own companion text per field shown only on `OTH`/`TBD`, no `or_other`; R-13a
+= undecided, unassigned, blocks valuation; R-14 `rebuild:replay` label used from now). Added the
+cost-index decision (default per catalog domain, overridable per project with a reason, decided in
+the pricing phase) and his note that `docs/inventory/survey123.md` is unreliable. Two other edits
+only: the header line about rulings, and the R-13a sentence in §8.2 (now states the ruling). Rest
+untouched.
+
+**PLAN.md.** Build order §10 became tasks. Ids are `B<n>` for phase n (so they do not collide with
+Phase 0/1 numbering). **B1** (harness and contract) is 21 small tasks, B1.1–B1.21: toolchain
+(standard; box has python 3.14, no pip/uv found, so B1.1 must find out and list what is missing),
+CI checks (file size, core-is-clean, module isolation), test DB harness, `Ref`, manifest (the one
+heavy code task), resolve, loader, describe, template + `hello`/`hello_friend`, contract-test helper,
+migrations check, decision store + ADR import, MAP.md/ADDING_A_MODULE.md, and a heavy phase review.
+Local tiers for single-file code units with tests. **B2–B6** and **B8–B12** are one placeholder each
+(standard), to be broken down when reached; B6 carries the parser redo of the Survey123 inventory.
+Gates are their own CHECKPOINT lines: **`real-data`** (`approvals/real-data.md`, before B7, the 26-150
+data; Survey123 forms need no gate) and **`cutover`** (`approvals/cutover.md`, before B13 cutover
+planning). Verified the runner parses the plan (`runner/test_run.py` passes; first task is B1.1).
+
+**Next run should know.** B1.1 first. No code exists yet; if the box has no PostgreSQL or uv, B1.1
+should say so in `docs/TOOLCHAIN.md` and B1.6/B1.15 will block until the operator provides one.
+I did not check the box's toolchain beyond `python3 --version` (3.14.4, no pip) and `which`.

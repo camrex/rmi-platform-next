@@ -2,7 +2,7 @@
 
 Task 0.7, 2026-09-30; revised by 0.8, 2026-10-02, for the operator's 2026-10-02 direction (MISSION.md)
 and `docs/inventory/changes-since-2026-09-30.md`. Sources: `docs/inventory/` and `~/sources/`
-(paths relative to each repo). Positions the operator has not ruled on are **[R-n]**, listed in §12.
+(paths relative to each repo). Positions that needed a ruling are **[R-n]**, listed in §12; all were ruled on 2026-10-02.
 
 ## 1. Summary
 
@@ -498,9 +498,9 @@ binding with row filters `to_complex_type == NML` and `!= NML` (`tivs/assets/tur
 | later `dslip`, `lap_sw`, `to_mpf`, `dia_mpf` (#410; 26-150: 27 / 3 / 17 / 8 records) | `turnouts_cx` | `= 'DSLIP'` … |
 
 Adding `dslip` narrows `complex_trackwork` without editing it; the coverage check proves nothing
-moved twice or vanished. **[R-13a] for the operator:** is an empty `to_complex_type` a normal
-turnout or undecided? Today `!= NML` keeps NULLs (`tivs/assets/types.py:84`), valuing them as
-complex trackwork. Proposed: `undecided`, unclaimed, reported `unassigned`, blocking at valuation.
+moved twice or vanished. **[R-13a], ruled 2026-10-02:** an empty `to_complex_type` is `undecided`. Today `!= NML` keeps NULLs
+(`tivs/assets/types.py:84`), valuing them as complex trackwork; instead it is unclaimed, reported
+`unassigned`, and blocks valuation.
 
 **Era-mixed sources** (`turnout_inv_pt` / `turnout_cx_inv_pt`; the wayside pair): alternative
 sources, one chosen by the project's GIS binding as today (`turnout.py` docstring); binding both
@@ -615,23 +615,32 @@ restore drill (#1400, #1424).
 10. **Not verified:** live layers vs templates, Survey123 field use, runtime seams, the full
     `sbis.seam` DTO list, how cleanly cost-book identities map to catalog classes.
 
-## 12. For the operator to rule on
+## 12. Operator rulings
 
-| # | recommendation (details in the section cited) |
-|---|---|
-| R-1 | New repo; modules ported: calculators unchanged, adapters change, fixtures prove numbers (§2). Evolve-in-place is the viable, cheaper alternative. |
-| R-2 | One decision store; ADRs 0001–0025 and `OWNER_RULINGS.md` imported as history (§5). |
-| R-3 | GlobalID the only GIS key; OBJECTID only for OID datasets (§4.1). |
-| R-4 | Typed absence (`Presence`), incl. `TBD` and `unassigned` (§6.1). |
-| R-5 | Seam values carry provenance; money carries price refs (§4.3). |
-| R-6 | Slot groups become child rows on sync (§6.2). |
-| R-7a | Catalog: own module; sole definer of properties, none mandatory; one standard value per property, no per-railroad variants; vocabulary authority exporting GIS domains (§7). |
-| R-7b | Pricing: own module; cost basis only; scope and carry-over; escalation chain; no overwrite; permissions and source visibility; seeds (§7A). Operator direction 2026-10-02. |
-| R-8 | Overtaken: standalone CIV viewer is its own project (#1981); CIV anchor on `oid:` refs (§9.3). |
-| R-9 | CVS ported as is, first contract test; land and sales out of scope (§8.1). |
-| R-10 | Ops are constraints now, work at cutover (§10). |
-| R-11 | Core units vocabulary and `Quantity` (§6.1). |
-| R-12 | Capture = domain + `OTH`/`TBD` + companion text; GIS schema changes by proposal → ruling → GIS admin (§6.3, §6.4, §7.6). |
-| R-13 | TIVS framework + asset sub-modules; valuation date per run (§8.2). **R-13a:** empty `to_complex_type` = normal or undecided? (proposed: undecided). |
-| R-14 | Old platform takes only valuation-critical changes, `rebuild:replay` label + PR line, `docs/PARITY.md` (§11). |
-| — | Tabled items stay tabled; reference hub and reports are later modules; fee rework waits for #1829. |
+All ruled 2026-10-02 in `approvals/architecture.md` ("Approved: docs/architecture/PROPOSAL.md as
+revised by task 0.8"). "Accepted" means as recommended; additions are the operator's.
+
+| # | recommendation (details in the section cited) | ruling |
+|---|---|---|
+| R-1 | New repo; modules ported: calculators unchanged, adapters change, fixtures prove numbers (§2). Evolve-in-place is the viable, cheaper alternative. | **Ruled: accepted.** |
+| R-2 | One decision store; ADRs 0001–0025 and `OWNER_RULINGS.md` imported as history (§5). | **Ruled: accepted.** |
+| R-3 | GlobalID the only GIS key; OBJECTID only for OID datasets (§4.1). | **Ruled: accepted.** |
+| R-4 | Typed absence (`Presence`), incl. `TBD` and `unassigned` (§6.1). | **Ruled: accepted.** |
+| R-5 | Seam values carry provenance; money carries price refs (§4.3). | **Ruled: accepted.** |
+| R-6 | Slot groups become child rows on sync (§6.2). | **Ruled: accepted.** Measured on the 26-150 forms: 557 of 1,866 questions are numbered slots (Complex Turnout 268 of 512, 101 groups); one repeat group in all 12 forms. |
+| R-7a | Catalog: own module; sole definer of properties, none mandatory; one standard value per property, no per-railroad variants; vocabulary authority exporting GIS domains (§7). | **Ruled: accepted.** |
+| R-7b | Pricing: own module; cost basis only; scope and carry-over; escalation chain; no overwrite; permissions and source visibility; seeds (§7A). | **Ruled: accepted;** keep pricing scope `general` / `railroad` / `project`. |
+| R-8 | Overtaken: standalone CIV viewer is its own project (#1981); CIV anchor on `oid:` refs (§9.3). | **Ruled: noted (overtaken).** |
+| R-9 | CVS ported as is, first contract test; land and sales out of scope (§8.1). | **Ruled: accepted.** |
+| R-10 | Ops are constraints now, work at cutover (§10). | **Ruled: accepted.** |
+| R-11 | Core units vocabulary and `Quantity` (§6.1). | **Ruled: accepted.** |
+| R-12 | Capture = domain + `OTH`/`TBD` + companion text; GIS schema changes by proposal → ruling → GIS admin (§6.3, §6.4, §7.6). | **Ruled: accepted, with:** existing `OTHER` maps to `OTH`, and `UNK`/`UNKNOWN` to `TBD`; each field gets its **own** companion text, shown only when `OTH`/`TBD` is chosen (not one `notes_other` per form); Survey123's `or_other` is not used. Today 69 of 128 choice lists have an escape code, spelled four ways. |
+| R-13 | TIVS framework + asset sub-modules; valuation date per run (§8.2). | **Ruled: accepted.** |
+| R-13a | Empty `to_complex_type` = normal turnout or undecided? (proposed: undecided). | **Ruled: undecided** (unassigned, blocks valuation). |
+| R-14 | Old platform takes only valuation-critical changes, `rebuild:replay` label + PR line, `docs/PARITY.md` (§11). | **Ruled: accepted;** rmi-platform starts using the `rebuild:replay` label now. |
+| — | Cost index selection (§7A.4). | **Decided in the pricing phase:** a default index per catalog domain, overridable per project with a reason. |
+| — | Tabled items stay tabled; reference hub and reports are later modules; fee rework waits for #1829. | Unchanged. |
+
+**Note from the operator:** `docs/inventory/survey123.md` is unreliable in places (guessed layer
+names, hedged claims; it calls wayside detectors non-valued, which contradicts this proposal). Use
+the measured figures above; the form inventory is redone with a parser in the catalog phase (§10, 6).
