@@ -140,6 +140,49 @@ What this asks of the revised proposal:
    grain, migration of SBIS cost lists and TIVS cost books into price records), §12 (R-7 split
    into catalog and pricing rulings). Keep the rest of the document as it is. Under 12 pages still.
 
+## Operator direction, 2026-10-02 — TIVS asset types are sub-modules (also task 0.8)
+
+The operator: "we may want to consider whether assets in TIVS should be treated as
+sub-modules", then, on turnouts and complex trackwork:
+
+> - Turnouts: Source: turnouts_cx, Filter: to_complex_type: NML
+> - Complex Trackwork: Source: turnouts_cx, Filter: to_complex_type: not NML
+>
+> If we ever wanted to split Complex Trackwork up into its different types, which is probably
+> best at some point, this would make it easy. [On rail netting out turnout-excluded feet:] is
+> that something dependent on another module (turnouts), or the source GIS data? I would argue
+> that what Rail needs is its primary source and any source it relies on, not necessarily a
+> cross module thing.
+
+What this asks of the revised proposal:
+
+1. **TIVS is a valuation framework; each asset type is a sub-module.** The framework owns runs,
+   the five stages (ADR 0009), readiness gates (ADR 0024), the snapshot and reports. An asset
+   sub-module is one folder declaring: its **primary source and filter** (dataset + predicate,
+   e.g. `turnouts_cx where to_complex_type = 'NML'`), any **secondary sources** it reads, its
+   components and the catalog classes they are, the prices it asks pricing for, its RCN and
+   depreciation rules, its exhibit, and its test fixtures. Calculation stays code (ADR 0009).
+   Registered with TIVS in the same declarative style as the platform manifest, not with the
+   core: no routes, nav or migration chain per asset type; shared run/asset tables with a
+   per-asset declared detail schema.
+2. **Sub-modules depend on data, never on each other.** Rail depends on its primary source
+   (track) and secondary sources (`turnouts_cx`), not on the Turnout sub-module. Facts several
+   asset types need belong below all of them: a turnout's **footprint / exclusion length** is an
+   attribute of the turnout class in the catalog (as a relay's coil resistance is), or a derived
+   field of the dataset contract (§6.2), so Turnout and Rail read one definition (#1414, #1373).
+   Say where each such shared fact lives.
+3. **Every record lands in exactly one asset type.** The framework checks, per source, that the
+   sub-module filters are disjoint and exhaustive; a record no filter claims is reported as
+   `unassigned` (typed absence), one claimed twice fails the run. This is what makes splitting
+   Complex Trackwork into DSLIP, LAP_SW, TO_MPF, DIA_MPF (#410) safe: add a sub-module with a
+   narrower filter, and the general complex-trackwork filter becomes "not NML and not claimed".
+   Open question for the operator (mark it): is an empty `to_complex_type` a normal turnout or
+   undecided?
+4. **Revise in place**: §8 (TIVS row), §9.2 (snapshot records which sub-module and filter
+   valued each record), §10 (phase 8: framework first, then asset sub-modules one at a time,
+   turnout and complex trackwork as the worked example), §11 (risk: filter coverage on
+   era-mixed data such as the Schema-1/Schema-2 turnout and wayside pairs), §12 (a ruling line).
+
 ## What "better" means here
 
 1. **Modules as plugins.** A small core (auth, config, database, GIS sync, shared UI shell,
