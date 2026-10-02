@@ -500,3 +500,10 @@ Runner: ended without finishing (exit 0), attempt 2; re-tagged from coder to sta
 ```
 
 ```
+
+## 2026-10-02 B1.4 — done
+
+Rewrote `scripts/check_module_isolation.py` (the local attempts' version diffed the working tree only and its tests patched `sys.exit` wrongly) and its test. `check_module_isolation.py <base-ref> --module <key>` fails (exit 1) on any changed path outside `modules/<key>/`, `contracts/<key>_*`, `docs/`. Changed = `<base>...HEAD` plus uncommitted and untracked files; renames count as delete + add so moving a file out of a module is caught. Exit 2 on a bad ref or a malformed key. Tests build real temp git repos (10 cases).
+- Wiring: `make check-isolation BASE=<ref> MODULE=<key>` (not part of `make check`, which has no arguments) and `.github/workflows/module-isolation.yml`: on pull requests from branches named `module/<key>[/...]` it runs the check against the PR base SHA; other branches skip it. B1.5 should create `ci.yml` separately for `make check`.
+- Convention introduced: module work happens on `module/<key>` branches.
+- The new files pass ruff and pyright strict. `make check` is NOT green: pyright reports errors already present in `scripts/check_file_size.py`, `scripts/check_core_clean.py` and their tests (B1.2, B1.3; untyped `main()` and test fixtures). Next run should fix those (a coder/standard task is worth adding before B1.5 so CI can be green).

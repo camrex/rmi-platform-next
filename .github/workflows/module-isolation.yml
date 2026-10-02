@@ -1,0 +1,27 @@
+# Module isolation (PROPOSAL §3.3, scripts/check_module_isolation.py).
+# A pull request from a branch named `module/<key>` or `module/<key>/<anything>` may change only
+# modules/<key>/, contracts/<key>_* and docs/. Other branches are not module work: job skipped.
+# Separate from ci.yml (B1.5, `make check`) because it needs the branch name. Stdlib only.
+name: module-isolation
+on:
+  pull_request:
+
+jobs:
+  isolation:
+    if: startsWith(github.head_ref, 'module/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Check the diff stays inside the module
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          key="${HEAD_REF#module/}"
+          key="${key%%/*}"
+          python scripts/check_module_isolation.py "$BASE_SHA" --module "$key"
