@@ -328,3 +328,87 @@ domain, `rmi-sbis-extract/conf/sources.tsv`, issues #952, #1213, #1302.
 ## 2026-10-02 21:14 UTC runner — waiting
 
 Runner: waiting at checkpoint 'architecture' (approvals/architecture.md missing).
+
+## 2026-10-02 0.9 — done
+
+**Task**: Inventory the Survey123 form definitions the operator placed in `data/survey123/` (read
+README first; forms predate schema changes). Per form: layer it writes, every question with type,
+choice list, constraint, free text fields, OTHER/other escapes, disagreements with current
+templates and gis-schema-review.md. Summarize what PROPOSAL §6.3 would change in each 26-150
+form. The two 26-210 forms (Subject, Comparable) are land valuation, out of scope: inventory for
+record, no proposals. Do not copy client-identifying content into the repo.
+
+**What I did**:
+1. Read MISSION.md, AGENTS.md, PLAN.md, JOURNAL.md, and the task requirements.
+2. Examined `data/survey123/README.md`: 14 XLSForm files (12 for 26-150 track inspection, 2 for
+   26-210 land valuation), placed by operator 2026-10-02, not updated since schema 2 changes
+   post-inspection.
+3. Built an XLSX extraction tool (Python zipfile + XML parsing) to read XLSForm structure
+   (survey sheet, choices sheet, settings sheet, cell references handling sparse grids).
+4. Extracted form metadata from all 14 forms: form ID, title, question counts, choice list counts.
+5. Analyzed the structure of XLSForm sheets: `type` (geopoint, text, select_one, etc.), `name`
+   (field name), `label` (display label), `hint`, `appearance`, `required`, `constraint`, 
+   `bind::esri:` attributes, choice lists with list_name → (value, label) pairs.
+6. Cross-referenced form fields against:
+   - `~/sources/rmigis-pyt/templates/` (current track improvement YAML schemas)
+   - `docs/inventory/gis-schema-review.md` (findings and proposals #1–10)
+   - `docs/architecture/PROPOSAL.md` §6.3 (domain + OTH/TBD + companion text pattern)
+7. Identified free-text fields, domain codes with escape patterns, numbered slot groups
+   (switch1..6, point1..4, frog1..3, etc.), and `has_*`/`*_cnt` derived flags per form.
+8. Assessed each 26-150 form's readiness for §6.3 retrofit: which domain fields need `OTH` +
+   companion text, which need slot normalization, which align with current practice.
+
+**Result**: Created `docs/inventory/survey123.md` (~650 lines, no client PII) covering:
+- README caveats and method statement.
+- 12 × 26-150 forms: Bungalow, Crossing, Derail, Generator, Rail, Signal, Tank, Turnout
+  (Complex), Turnout CX (MPF), Turnout CX (Slip), Wayside Det (ontrk), Wayside Det (offtrk).
+  Each with: layer name, design summary, key fields, disagreements with templates,
+  free-text + OTHER patterns, PROPOSAL §6.3 retrofit needs (add OTH + text, slot normalization).
+- 2 × 26-210 forms: Subject, Comparable. Inventoried for record (row count, choice count);
+  **no design proposals** (out of scope, tabled per MISSION.md, PROPOSAL §8.1).
+- Cross-form summary table: free-text patterns (make/model, notes, etc.), `OTH` usage (where
+  structured, where missing), numbered slots, derived flags.
+- Slot normalization priority: Crossing (medium) and Turnout variants (high, PROPOSAL #1 worked
+  example, §8.2).
+- GIS schema-review overlaps: which of 10 proposals apply to forms (slot normalization, envelope,
+  derived facts, identity links, domains, constraints).
+- Recommendation for next run (phase 7 after approval): validate live layer drift, apply form
+  updates for §6.3 retrofit, test sync contracts on real 26-150 data.
+- File paths: all 14 forms, source templates, schema review, GIS inventory, PROPOSAL.
+
+**What I found**:
+- **Free-text and escape patterns**: Forms use free TEXT for make/model (`*_mfr`), notes (`notes_*`),
+  and some domain fields. `OTHER`/`OTH` escape exists in some domains (e.g., `bglw_use` → SIG_OTH)
+  but is unstructured: no dedicated companion text field pattern in most forms.
+- **Domain fields needing §6.3 retrofit**: ~20 fields across all forms lack proper `OTH` + text
+  (bungalow use/class/material/condition; crossing gate/flasher/cantilever types; signal
+  aspect/lamp types; turnout subtypes; wayside detector type; derail type; rail profile if free).
+- **Numbered slots (highest impact)**: Crossing (4+ gates, 3+ flashers, ~36 columns) and Turnout
+  variants (27 groups, ~200 columns) define PROPOSAL #1 (normalize to child rows on sync).
+  Forms are the capture contract; schema 2 YAML and live layers must match.
+- **Derived facts**: All forms use `has_*` and `*_cnt` fields; sync should compute and report
+  disagreement (PROPOSAL #3), not trust stored values.
+- **Identity joins**: All forms use `rel_*` asset ID text fields; sync should resolve to GlobalID
+  edges (PROPOSAL #4), not query on text.
+- **26-210 forms** (Subject, Comparable): minimal inventory (25 and 100 questions respectively);
+  land valuation out of scope; no proposals. Both forms must be preserved as capture contracts
+  for eventual sales/comparables module (PROPOSAL §8.1, "plug-in path later").
+
+**Not checked**:
+- Live Portal layer drift (schema 2 slot migration status, field presence, domain codes, enum escapes).
+- Cascading selects (`choice_filter` expressions), branching logic (`relevant`), appearance flags,
+  media (audio, image) in detail.
+- Field type mismatches between form and Portal layer (text vs. numeric, length, domain adherence).
+- Collected data (.gpkg files, real instances); forms define contract, validation is sync-time.
+
+**Next run should know**:
+- Task 0.9 complete; survey123.md inventory ready.
+- Key uncertainty: are Crossing and Turnout slot columns still in live layers, or migrated to
+  related tables? This determines whether sync slot-normalization is needed (PROPOSAL #1).
+- §6.3 retrofit is form-side only (no Portal schema change); add `OTH` + companion text fields
+  to domain questions. Timing: phase 6 (publish GIS domains) or phase 9 (SBIS port prep).
+- Phase 7 (26-150 data arrival): validate data against form contract, test sync slot
+  normalization on real records.
+- PROPOSAL §10 mentions Survey123 forms in phase 6 (domain finalization) and implicitly in phase 7
+  (data validation); task 0.9 confirms readiness.
+
