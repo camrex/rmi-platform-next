@@ -211,6 +211,37 @@ What this asks of the revised proposal:
 4. **Revise in place**: §6.2 (dataset contracts: reserved codes and companion text), §7.3/§7.4
    (domains as catalog identifiers; `OTH` feeds the unclassified queue), and a line in §12.
 
+## Operator direction, 2026-10-02 — who defines, requires and enforces catalog properties (also task 0.8)
+
+Asked whether a required catalog property such as a turnout's excluded length is defined by the
+catalog, by TIVS, or by the Rail (and Ties) sub-module, the rule agreed is:
+
+1. **The catalog defines a property**: name, type, unit and meaning, in the domain's attribute
+   schema (§7.2). A module that needs a new property gets it added to the catalog domain; no
+   module attaches private properties to catalog entries.
+2. **A consumer requires it, for its own use.** "Required" belongs to a use, not to the property:
+   Rail (and Ties) declares that every turnout class in its secondary source must have
+   `excluded_length`; Turnout and SBIS do not need it. The catalog itself never makes such a
+   property mandatory, so a new thing can still be recorded as `OTH`/`TBD` before it is known.
+3. **The TIVS framework enforces it at the readiness gate** (ADR 0024): a Rail run is blocked,
+   naming the classes that lack the property, rather than valuing with a silent zero or a
+   default footprint (#1414). The same gaps appear in the catalog's curation queue as
+   "properties wanted by <consumer>". Pricing follows the same rule: sub-modules declare which
+   classes they need priced, and the gate reports what is missing.
+
+**One standard, not per railroad.** The operator, 2026-10-02: "We don't differentiate between
+railroads. We use as close to a single standard (source) that we can independent of railroad.
+And in reality, what is the real difference? Plus, let's take into consideration that Union
+Pacific and Norfolk Southern may merge soon, who's standard would be right if they differ? The
+fact is that its not like UP will go out and replace all of the turnouts with their standard."
+So a catalog class carries one value per property, from RMI's chosen standard source, recorded
+as a sourced claim (source, confidence). No per-railroad variants of a class or property.
+
+**Revise in place**: §7.2 (attribute schemas; properties defined only by the catalog; claims
+carry the standard source), §7.3 (track.turnout properties, excluded_length as the example), the
+TIVS framework text (sub-modules declare required properties and prices; readiness gate
+enforces), and §12.
+
 ## What "better" means here
 
 1. **Modules as plugins.** A small core (auth, config, database, GIS sync, shared UI shell,
