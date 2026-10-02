@@ -262,17 +262,41 @@ def commit_and_push(msg: str, log: Log) -> None:
     log(f"pushed {sh('git', '-C', str(WORK), 'rev-parse', '--short', 'HEAD').stdout.strip()}")
 
 
+LOCAL_TIERS = {"drudge", "coder"}
+
+
+def build_prompt(task: dict, today: str) -> str:
+    """The run's prompt. Local tiers get a small brief: their models have 8k/16k of context, and
+    MISSION + PLAN + JOURNAL alone are past 20k tokens (2026-10-02: B1.2 on fleet-coder filled
+    15,126 of 16,384 tokens reading them and stopped after one token). Pure."""
+    head = (f"You are the unattended rmi-platform rebuild. Today is {today} (UTC); use that date in "
+            f"the journal. Your task this run is {task['id']}:\n\n{task['what']}\n\n")
+    if task["tier"] not in LOCAL_TIERS:
+        return head + (
+            "Read MISSION.md and AGENTS.md first and follow them exactly: this task only, the "
+            "source repositories are in ~/sources (read-only), journal what you did in JOURNAL.md, "
+            "tick the task in PLAN.md if it is done, and commit. Do not push; the runner pushes.")
+    tid = task["id"]
+    return head + (
+        "Your context window is small, so read sparingly:\n"
+        "- Read only the sections '## Each run' and '## Rules' of AGENTS.md "
+        "(sed -n '/^## Each run/,/^## Tiers/p;/^## Rules/,$p' AGENTS.md), then only the files your "
+        "task names or must change. Do NOT read MISSION.md, PLAN.md or JOURNAL.md.\n"
+        "- Never print a whole file over 150 lines: use head, sed -n 'a,bp' or grep -n.\n"
+        "- Keep command output short (pipe long output through tail -30).\n"
+        "Do this task only. When it is done and its tests pass:\n"
+        f"  sed -i 's/^- \\[ \\] {re.escape(tid)} /- [x] {tid} /' PLAN.md\n"
+        f"  printf '\\n## {today} {tid} — done\\n\\n<two or three lines: what you built, "
+        "where, what the next run should know>\\n' >> JOURNAL.md   (write real lines, not the placeholder)\n"
+        "then git add the files you changed and git commit with a clear message. Do not push; the "
+        "runner pushes. If you cannot finish, journal '— partial' or '— blocked' the same way, say "
+        "why in one line, and do not tick the task.")
+
+
 def run_pi(task: dict, log: Log, timeout_s: int) -> tuple[int, str]:
     model = TIERS[task["tier"]]
-    prompt = (
-        f"You are the unattended rmi-platform rebuild. Today is {dt.datetime.now(dt.timezone.utc):%Y-%m-%d} (UTC); "
-        f"use that date in the journal. Your task this run is {task['id']}:\n\n"
-        f"{task['what']}\n\n"
-        "Read MISSION.md and AGENTS.md first and follow them exactly: this task only, the "
-        "source repositories are in ~/sources (read-only), journal what you did in JOURNAL.md, "
-        "tick the task in PLAN.md if it is done, and commit. Do not push; the runner pushes."
-    )
-    env = dict(os.environ, PATH=f"{HOME}/.local/node/bin:{os.environ.get('PATH', '')}",
+    prompt = build_prompt(task, dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%d"))
+    env = dict(os.environ, PATH=f"{HOME}/.local/bin:{HOME}/.local/node/bin:{os.environ.get('PATH', '')}",
                PI_OFFLINE="1", PI_TELEMETRY="0")
     log(f"task {task['id']} [{task['tier']} -> {model}] starting")
     try:

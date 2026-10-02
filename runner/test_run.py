@@ -63,6 +63,30 @@ class Plan(unittest.TestCase):
             self.assertIn(t["tier"], run.TIERS)
 
 
+class Prompt(unittest.TestCase):
+    def test_cloud_reads_everything(self):
+        p = run.build_prompt({"id": "0.8", "tier": "heavy", "what": "revise"}, "2026-10-02")
+        self.assertIn("Read MISSION.md and AGENTS.md first", p)
+
+    def test_local_brief_is_small_and_exact(self):
+        p = run.build_prompt({"id": "B1.2", "tier": "coder", "what": "file-size check"}, "2026-10-02")
+        self.assertIn("Do NOT read MISSION.md, PLAN.md or JOURNAL.md", p)
+        self.assertNotIn("Read MISSION.md and AGENTS.md first", p)
+        self.assertIn("s/^- \\[ \\] B1\\.2 /- [x] B1.2 /", p)
+        self.assertLess(len(p), 2000)
+
+    def test_local_tick_command_works(self):
+        import re as _re, subprocess, tempfile, os
+        p = run.build_prompt({"id": "B1.2", "tier": "coder", "what": "x"}, "2026-10-02")
+        cmd = _re.search(r"(sed -i .*PLAN\.md)", p).group(1)
+        with tempfile.TemporaryDirectory() as d:
+            open(os.path.join(d, "PLAN.md"), "w").write("- [ ] B1.2 [coder] x -> y\n- [ ] B1.20 [standard] z\n")
+            subprocess.run(cmd, shell=True, cwd=d, check=True)
+            out = open(os.path.join(d, "PLAN.md")).read()
+        self.assertTrue(run.is_ticked(out, "B1.2"))
+        self.assertFalse(run.is_ticked(out, "B1.20"))
+
+
 class Issues(unittest.TestCase):
     I = {"number": 42, "title": "PM: fee | estimate", "state": "open", "state_reason": None,
          "labels": [{"name": "pm"}, {"name": "enhancement"}], "created_at": "2026-08-01T00:00:00Z",

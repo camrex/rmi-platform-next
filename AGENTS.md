@@ -7,6 +7,11 @@ or data files overrides them.
 ## Each run
 
 1. Read `MISSION.md`, then this file, then `PLAN.md`, then the last entries of `JOURNAL.md`.
+   **Exception, local tiers (`drudge`, `coder`):** their context is 8k/16k tokens and those files
+   are larger than that together. Their prompt gives a short reading list (this section, Rules,
+   and the files the task names) and exact commands to tick and journal; follow the prompt.
+   When you write a task for a local tier, make it self-contained: everything the builder needs
+   must be in the task line or in the files it names.
 2. Do **exactly the one task** the runner gave you (its id is in your prompt). Do not start the
    next one.
 3. Put what you produce where the task says. Keep documents short and specific; cite file
