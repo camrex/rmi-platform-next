@@ -324,3 +324,7 @@ domain, `rmi-sbis-extract/conf/sources.tsv`, issues #952, #1213, #1302.
 
 **Next run should know:** the next PLAN item is behind `CHECKPOINT architecture`; wait for
 `approvals/architecture.md`. After approval, turn §10 into Phase 1 tasks.
+
+## 2026-10-02 21:14 UTC runner — waiting
+
+Runner: waiting at checkpoint 'architecture' (approvals/architecture.md missing).
