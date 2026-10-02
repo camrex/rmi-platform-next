@@ -108,6 +108,17 @@ def is_ticked(plan: str, tid: str) -> bool:
                for l in plan.splitlines())
 
 
+def untick(plan: str, tid: str) -> str:
+    """Undo an agent's tick (the runner's own check failed). Pure."""
+    out = []
+    for l in plan.splitlines():
+        m = TASK_RE.match(l.strip())
+        if m and m.group(2) == tid and m.group(1) == "x" and "BLOCKED" not in m.group(4):
+            l = f"- [ ] {tid} [{m.group(3)}] {m.group(4)}"
+        out.append(l)
+    return "\n".join(out) + "\n"
+
+
 def mark_blocked(plan: str, tid: str, why: str) -> str:
     out = []
     for l in plan.splitlines():
@@ -312,6 +323,24 @@ def run_pi(task: dict, log: Log, timeout_s: int) -> tuple[int, str]:
         return 124, out
 
 
+def verify(log: Log) -> tuple[bool, str]:
+    """The runner's own check that a ticked task left the build green, rather than taking the
+    agent's word for it (2026-10-02, once local models started writing code). `make check` is
+    the project's gate (B1.1); before a Makefile exists there is nothing to run."""
+    if not (WORK / "Makefile").exists():
+        return True, "no Makefile yet"
+    make = HOME / ".local" / "bin" / "make"
+    env = dict(os.environ, PATH=f"{HOME}/.local/bin:{os.environ.get('PATH', '')}")
+    try:
+        p = subprocess.run([str(make) if make.exists() else "make", "check"], cwd=WORK, env=env,
+                           text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=1800)
+    except subprocess.TimeoutExpired:
+        return False, "make check timed out after 30 min"
+    tail = "\n".join(p.stdout.strip().splitlines()[-25:])
+    log(f"make check -> exit {p.returncode}")
+    return p.returncode == 0, tail
+
+
 def load_state() -> dict:
     try:
         return json.loads(STATE.read_text())
@@ -369,6 +398,17 @@ def main() -> int:
         tail = "\n".join(out.strip().splitlines()[-6:])
 
         if code == 0 and is_ticked(plan_after, task["id"]):
+            ok, check_out = verify(log)
+            if not ok:
+                (WORK / "PLAN.md").write_text(untick(plan_after, task["id"]))
+                n = state["attempts"].get(task["id"], 0) + 1
+                state["attempts"][task["id"]] = n
+                save_state(state)
+                journal(f"## {utc()} {task['id']} — runner\n\nRunner: the task was ticked but "
+                        f"`make check` failed, so it is un-ticked (attempt {n} of {MAX_ATTEMPTS}). "
+                        f"The next attempt starts from this commit.\n\n```\n{check_out}\n```")
+                commit_and_push(f"{task['id']}: runner un-ticked (make check failed)", log)
+                return 0
             state["attempts"].pop(task["id"], None)
             save_state(state)
             commit_and_push(f"{task['id']}: {task['what'][:60]}", log)

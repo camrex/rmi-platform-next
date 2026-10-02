@@ -48,6 +48,14 @@ class Plan(unittest.TestCase):
         t, _ = run.next_task(b, set())
         self.assertEqual(t["id"], "0.3")
 
+    def test_untick(self):
+        ticked = PLAN.replace("- [ ] 0.2", "- [x] 0.2")
+        back = run.untick(ticked, "0.2")
+        self.assertFalse(run.is_ticked(back, "0.2"))
+        self.assertTrue(run.is_ticked(back, "0.1"))
+        blocked = run.mark_blocked(PLAN, "0.2", "3 failed runs")
+        self.assertIn("BLOCKED", run.untick(blocked, "0.2"))   # a BLOCKED line stays as it is
+
     def test_failure_patterns(self):
         self.assertTrue(run.UNAVAILABLE.search("400 Invalid model name passed in model=fleet-coder"))
         self.assertTrue(run.BUDGET.search("Budget has been exceeded! Current cost: 50.1"))
