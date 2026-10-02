@@ -635,3 +635,7 @@ Runner: ended without finishing (exit 0), attempt 1; retrying now.
 ```
 
 ```
+
+## 2026-10-02 B1.7 — done
+
+Implemented Ref type in core/src/rmi_core/refs.py and tests in core/tests/test_refs.py. Supported gis:, oid:, and module.kind: forms.

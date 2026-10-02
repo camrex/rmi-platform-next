@@ -4,7 +4,7 @@ from pydantic import BaseModel, ConfigDict
 class Ref(BaseModel):
     """
     A stable reference to a linkable entity.
-    
+
     Forms:
     - `gis:<dataset>:<GlobalID>`
     - `oid:<dataset>:<OBJECTID>`
@@ -12,6 +12,7 @@ class Ref(BaseModel):
     - `catalog.item:<id>`
     - `pricing.price:<id>`
     """
+
     model_config = ConfigDict(frozen=True)
 
     scheme: str
@@ -29,16 +30,14 @@ class Ref(BaseModel):
             raise ValueError("Ref string cannot be empty")
         if ":" not in s:
             raise ValueError(f"Malformed ref: {s}. Expected format 'scheme:value'")
-        
+
         scheme, value = s.split(":", 1)
         if not scheme or not value:
             raise ValueError(f"Malformed ref: {s}. Scheme and value must both be present")
-        
+
         if scheme in ("gis", "oid") and ":" not in value:
-            raise ValueError(
-                f"Malformed {scheme} ref: {s}. Expected format '{scheme}:dataset:id'"
-            )
-        
+            raise ValueError(f"Malformed {scheme} ref: {s}. Expected format '{scheme}:dataset:id'")
+
         return cls(scheme=scheme, value=value)
 
     @property
