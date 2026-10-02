@@ -564,3 +564,42 @@ Runner: ended without finishing (exit 0), attempt 2; re-tagged from drudge to li
 ```
 
 ```
+
+## 2026-10-02 B1.5 — done
+
+**Task**: GitHub Actions workflow running `make check` on push and pull request (Python and tool versions from docs/TOOLCHAIN.md).
+
+**What I did**:
+1. Read MISSION.md, AGENTS.md, PLAN.md and JOURNAL.md to understand context.
+2. Reviewed docs/TOOLCHAIN.md to identify the required tool versions:
+   - Python 3.12 (per ADR 0002, as recorded in TOOLCHAIN.md after B1.1)
+   - uv 0.12.22 (the version installed on rmi-nuc during B1.1)
+   - make 4.4.1 (available on rmi-nuc in ~/.local/bin, but may or may not be on GitHub Actions runners)
+3. Examined the existing Makefile to understand `make check` target:
+   - Runs: sync, lint, typecheck, test, check-size, check-core-clean
+   - Exports PATH to include ~/.local/bin for uv and make
+4. Reviewed the existing module-isolation.yml workflow for GitHub Actions patterns.
+5. Created `.github/workflows/ci.yml`:
+   - Triggers on: push to main, and all pull requests
+   - Sets up Python 3.12 with actions/setup-python@v5
+   - Installs uv 0.12.22 using astral-sh/setup-uv@v3
+   - Ensures make is available (check which make, install if needed)
+   - Runs `make check` as the gate (lint, format-check, types, tests, checks)
+6. Committed the workflow.
+
+**What I found**:
+- The Makefile already implements `make check` correctly, exported PATH for tools in ~/.local/bin.
+- TOOLCHAIN.md documents the exact versions: Python 3.12, uv 0.12.22, ruff 0.16, pyright 1.1.414, pytest 9.1.
+- The workflow uses the astral-sh official uv action instead of manual tarball extraction (cleaner, more reliable).
+- GitHub Actions ubuntu-latest typically has make pre-installed, but the install check ensures compatibility.
+
+**Result**: Created `.github/workflows/ci.yml` that:
+- Sets Python to 3.12 (per ADR 0002 in TOOLCHAIN.md)
+- Installs uv 0.12.22 (the version tested on rmi-nuc)
+- Ensures make is available
+- Runs `make check` as the gate on every push to main and PR
+
+**Next run should know**:
+- B1.5 is done; the workflow is committed and ready.
+- All B1 harness tasks up to B1.5 are complete.
+- Next phases require database setup (B1.6) and module framework implementation (B1.7 onwards).
