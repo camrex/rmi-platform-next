@@ -127,10 +127,18 @@ def refresh_sources(log: Log) -> None:
         try:
             if (d / ".git").exists():
                 sh("chmod", "-R", "u+w", str(d))
-                sh("git", "-C", str(d), "fetch", "-q", f"--shallow-since={HISTORY_SINCE}", "origin")
+                # git refuses --shallow-since when nothing is newer than the date ("error
+                # processing shallow info"): such a repo has not changed, so its tip is enough.
+                if sh("git", "-C", str(d), "fetch", "-q", f"--shallow-since={HISTORY_SINCE}", "origin",
+                      check=False).returncode != 0:
+                    sh("git", "-C", str(d), "fetch", "-q", "--depth", "1", "origin")
                 sh("git", "-C", str(d), "reset", "-q", "--hard", "FETCH_HEAD")
             else:
-                sh("git", "clone", "-q", f"--shallow-since={HISTORY_SINCE}", f"https://github.com/camrex/{r}", str(d), timeout=1200)
+                url = f"https://github.com/camrex/{r}"
+                if sh("git", "clone", "-q", f"--shallow-since={HISTORY_SINCE}", url, str(d),
+                      check=False, timeout=1200).returncode != 0:
+                    sh("rm", "-rf", str(d), check=False)
+                    sh("git", "clone", "-q", "--depth", "1", url, str(d), timeout=1200)
             head = sh("git", "-C", str(d), "rev-parse", "--short", "HEAD").stdout.strip()
             log(f"source {r} at {head}")
         except subprocess.CalledProcessError as e:
