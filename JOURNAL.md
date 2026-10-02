@@ -468,3 +468,11 @@ layout, one lockfile, per-module packages for the `rmi.modules` entry point). Cr
   1.1.414); lockfile holds them.
 - `modules/*` is a workspace glob, `_template` excluded; `modules/` is empty now, so B1.12 should
   keep the template out of the workspace and out of pyright (already excluded in the config).
+
+## 2026-10-02 22:42 UTC B1.2 — runner
+
+Runner: ended without finishing (exit 0), attempt 1 of 3.
+
+```
+
+```
