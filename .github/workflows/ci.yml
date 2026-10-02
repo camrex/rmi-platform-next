@@ -1,0 +1,25 @@
+# CI: lint, format, types, tests (PROPOSAL §5, B1.5, docs/TOOLCHAIN.md).
+# Runs `make check` on push and pull request. Python 3.12, tools from uv.
+name: ci
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@v3
+        with:
+          version: "0.12.22"
+      - name: Install make (if not present)
+        run: |
+          which make || apt-get update && apt-get install -y make
+      - name: Run make check
+        run: make check
