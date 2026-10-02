@@ -136,3 +136,54 @@ class Issues(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class Loop(unittest.TestCase):
+    """main() end to end with the edges replaced: no git, no Pi, no network."""
+
+    def _run(self, plan_text, outcomes):
+        import tempfile
+        from pathlib import Path
+        d = Path(tempfile.mkdtemp())
+        (d / "work").mkdir()
+        (d / "work" / "PLAN.md").write_text(plan_text)
+        (d / "work" / "JOURNAL.md").write_text("# JOURNAL\n")
+        calls = []
+        saved = {k: getattr(run, k) for k in ("HOME", "WORK", "LOGS", "STATE", "sync_work",
+                 "refresh_sources", "refresh_issues", "commit_and_push", "run_pi", "verify", "approvals")}
+
+        def fake_pi(task, log, timeout_s):
+            calls.append((task["id"], task["tier"]))
+            done = outcomes[len(calls) - 1]
+            if done:
+                p = run.WORK / "PLAN.md"
+                p.write_text(p.read_text().replace(f"- [ ] {task['id']} ", f"- [x] {task['id']} "))
+            return 0, "did it" if done else ""
+        try:
+            run.HOME, run.WORK, run.LOGS = d, d / "work", d / "logs"
+            run.STATE = d / "state.json"
+            run.sync_work = run.refresh_sources = run.refresh_issues = lambda log: None
+            run.commit_and_push = lambda msg, log: None
+            run.run_pi, run.verify, run.approvals = fake_pi, (lambda log: (True, "")), (lambda: set())
+            argv, sys.argv = sys.argv, ["run.py"]
+            try:
+                run.main()
+            finally:
+                sys.argv = argv
+            return calls, (d / "work" / "PLAN.md").read_text(), (d / "work" / "JOURNAL.md").read_text()
+        finally:
+            for k, v in saved.items():
+                setattr(run, k, v)
+
+    def test_local_failures_escalate_in_the_same_run(self):
+        calls, plan, journal = self._run("- [ ] B1.4 [coder] iso -> x\n- [ ] B1.5 [light] y -> z\n",
+                                         [False, False, True, True])
+        self.assertEqual(calls[:3], [("B1.4", "coder"), ("B1.4", "coder"), ("B1.4", "standard")])
+        self.assertIn("- [x] B1.4 [standard]", plan)
+        self.assertIn("re-tagged from coder to standard", journal)
+        self.assertIn(("B1.5", "light"), calls)      # failed local attempts used no slot
+
+    def test_cloud_failure_still_ends_the_run(self):
+        calls, plan, _ = self._run("- [ ] C1 [standard] a -> x\n- [ ] C2 [light] b -> y\n", [False, True])
+        self.assertEqual(calls, [("C1", "standard")])
+        self.assertIn("- [ ] C1 [standard]", plan)

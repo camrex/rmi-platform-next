@@ -406,7 +406,14 @@ def main() -> int:
         refresh_issues(log)
     state = load_state()
 
-    for _ in range(a.max_tasks):
+    # Slots bound cloud work per run. A failed LOCAL attempt is free, so it uses no slot and does
+    # not end the run: it is retried at once, and after ESCALATE_AFTER failures re-tagged to a cloud
+    # tier and retried at once too (operator, 2026-10-02: "should not wait for the next time
+    # slot"). An escalated retry always runs, even with no slot left. Cloud failures, an
+    # unreachable router and a spent budget still end the run. `guard` bounds the loop.
+    slots, guard, owed = a.max_tasks, a.max_tasks + 2 * (ESCALATE_AFTER + 1) + 2, False
+    while (slots > 0 or owed) and guard > 0:
+        guard -= 1
         plan = (WORK / "PLAN.md").read_text()
         task, why = next_task(plan, approvals())
         if not task:
@@ -420,38 +427,49 @@ def main() -> int:
         if a.dry_run:
             log(f"next: {task['id']} [{task['tier']} -> {TIERS[task['tier']]}] {task['what']}")
             return 0
+        if slots <= 0 and not owed:
+            break
+        owed = False
 
         left = RUN_BUDGET_S - (time.monotonic() - started)
         if left < 600:
             log("night's time budget used up")
             break
+        local = task["tier"] in LOCAL_TIERS
         code, out = run_pi(task, log, int(min(TASK_TIMEOUT_S, left)))
         plan_after = (WORK / "PLAN.md").read_text()
         tail = "\n".join(out.strip().splitlines()[-6:])
 
         if code == 0 and is_ticked(plan_after, task["id"]):
             ok, check_out = verify(log)
-            if not ok:
-                n = state["attempts"].get(task["id"], 0) + 1
-                plan_new, note = after_failure(untick(plan_after, task["id"]), task, n)
-                (WORK / "PLAN.md").write_text(plan_new)
-                if note and note.startswith("re-tagged"):
-                    state["attempts"].pop(task["id"], None)
-                else:
-                    state["attempts"][task["id"]] = n
+            if ok:
+                state["attempts"].pop(task["id"], None)
                 save_state(state)
-                journal(f"## {utc()} {task['id']} — runner\n\nRunner: the task was ticked but "
-                        f"`make check` failed, so it is un-ticked (attempt {n})"
-                        f"{'; ' + note if note else ''}. The next attempt starts from this commit."
-                        f"\n\n```\n{check_out}\n```")
-                commit_and_push(f"{task['id']}: runner un-ticked (make check failed)", log)
-                return 0
-            state["attempts"].pop(task["id"], None)
+                commit_and_push(f"{task['id']}: {task['what'][:60]}", log)
+                slots -= 1
+                continue
+            n = state["attempts"].get(task["id"], 0) + 1
+            plan_new, note = after_failure(untick(plan_after, task["id"]), task, n)
+            (WORK / "PLAN.md").write_text(plan_new)
+            escalated = bool(note and note.startswith("re-tagged"))
+            if escalated:
+                state["attempts"].pop(task["id"], None)
+            else:
+                state["attempts"][task["id"]] = n
             save_state(state)
-            commit_and_push(f"{task['id']}: {task['what'][:60]}", log)
-            continue
+            journal(f"## {utc()} {task['id']} — runner\n\nRunner: the task was ticked but "
+                    f"`make check` failed, so it is un-ticked (attempt {n})"
+                    f"{'; ' + note if note else ''}."
+                    f"{' Retrying now.' if local and not (note or '').startswith('marked') else ''}"
+                    f"\n\n```\n{check_out}\n```")
+            commit_and_push(f"{task['id']}: runner un-ticked (make check failed)", log)
+            if local and not (note or "").startswith("marked"):
+                owed = escalated
+                continue
+            return 0
 
-        # Not done. Say why, keep any partial work, and stop for tonight.
+        # Not done. Say why and keep any partial work.
+        stop = True
         if UNAVAILABLE.search(out):
             reason = f"tier '{task['tier']}' unavailable (its fleet box is busy or offline); waiting"
         elif BUDGET.search(out):
@@ -465,14 +483,19 @@ def main() -> int:
             if note:
                 (WORK / "PLAN.md").write_text(plan_new)
                 reason += "; " + note
-            if note and note.startswith("re-tagged"):
+            escalated = bool(note and note.startswith("re-tagged"))
+            if escalated:
                 state["attempts"].pop(task["id"], None)
             else:
                 state["attempts"][task["id"]] = n
+            if local and not (note or "").startswith("marked"):
+                stop, owed = False, escalated
+                reason += "; retrying now"
         save_state(state)
         journal(f"## {utc()} {task['id']} — runner\n\nRunner: {reason}.\n\n```\n{tail}\n```")
         commit_and_push(f"{task['id']}: runner note ({reason[:50]})", log)
-        return 0
+        if stop:
+            return 0
 
     return 0
 
