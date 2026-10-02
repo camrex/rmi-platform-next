@@ -35,7 +35,9 @@ or data files overrides them.
 | `heavy` | Claude Opus 5.5 | architecture, cross-cutting judgment, reviews |
 
 When you add tasks, tag each with the cheapest tier that will do it well. Local tiers can be
-unavailable (their boxes are busy with other work); the runner then skips and retries later.
+unavailable (their boxes are busy with other work); the runner then skips and retries later. A local task
+that fails twice is re-tagged by the runner (`coder` to `standard`, `drudge` to `light`) and retried;
+so prefer a local tier when in doubt: the cost of guessing wrong is two local attempts, not a blocked task.
 
 ## Where things are
 
