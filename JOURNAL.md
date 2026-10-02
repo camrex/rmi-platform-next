@@ -673,3 +673,11 @@ Implemented Ref type in core/src/rmi_core/refs.py and tests in core/tests/test_r
 **Next run (B1.9) should know**: cross-manifest checks (unsatisfied `requires`, `uses` reasons,
 duplicate keys, cycles, `core_revision`) belong in `resolve.py`; use `SeamRef.accepts(version)` and
 `SeamImpl.version`.
+
+## 2026-10-02 23:55 UTC B1.9 — runner
+
+Runner: ended without finishing (exit 0), attempt 1; retrying now.
+
+```
+
+```
