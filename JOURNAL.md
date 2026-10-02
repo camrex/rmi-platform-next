@@ -412,3 +412,7 @@ record, no proposals. Do not copy client-identifying content into the repo.
 - PROPOSAL §10 mentions Survey123 forms in phase 6 (domain finalization) and implicitly in phase 7
   (data validation); task 0.9 confirms readiness.
 
+
+## 2026-10-02 22:17 UTC runner — waiting
+
+Runner: waiting at checkpoint 'architecture' (approvals/architecture.md missing).
