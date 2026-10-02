@@ -81,7 +81,8 @@ class Prompt(unittest.TestCase):
         self.assertIn("Do NOT read MISSION.md, PLAN.md or JOURNAL.md", p)
         self.assertNotIn("Read MISSION.md and AGENTS.md first", p)
         self.assertIn("s/^- \\[ \\] B1\\.2 /- [x] B1.2 /", p)
-        self.assertLess(len(p), 2000)
+        self.assertIn("make check", p)
+        self.assertLess(len(p), 2300)
 
     def test_local_tick_command_works(self):
         import re as _re, subprocess, tempfile, os
