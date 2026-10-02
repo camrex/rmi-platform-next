@@ -627,3 +627,11 @@ Runner: ended without finishing (exit 0), attempt 2; re-tagged from drudge to li
 - CI (`ci.yml`) has no PostgreSQL service, so DB tests skip there; set `RMI_TEST_ADMIN_DSN` and
   `RMI_REQUIRE_DB=1` when it gets one (operator follow-up, noted in TESTING.md).
 - PostGIS not checked or used; B3 decides.
+
+## 2026-10-02 23:29 UTC B1.7 — runner
+
+Runner: ended without finishing (exit 0), attempt 1; retrying now.
+
+```
+
+```
