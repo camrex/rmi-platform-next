@@ -847,3 +847,16 @@ Runner: ended without finishing (exit 0), attempt 2; re-tagged from drudge to li
 ```
 
 ```
+
+## 2026-10-03 B1.13b — done
+
+**Task**: Change Makefile `sync` target from `uv sync --python 3.12` to `uv sync --python 3.12 --all-packages` so workspace modules install and are visible to `rmi describe` and `load_modules()` after `make check`.
+
+**What I did**:
+1. Edited Makefile: changed `sync:` recipe to add `--all-packages` flag.
+2. Ran `make check`: all 120 tests passed (green as required).
+   - uv sync now installs: `+ rmi-module-hello==0.1.0` and `+ rmi-module-hello-friend==0.1.0`
+3. Ran `uv run rmi describe --compact`: output shows `"load_order": ["hello", "hello_friend"]` — modules visible as required.
+4. Committed with clear message.
+
+**Result**: Task complete. The `--all-packages` flag causes uv to install all workspace members (modules) in addition to the main package, fixing the visibility issue in `rmi describe` and `load_modules()`.
