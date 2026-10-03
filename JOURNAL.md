@@ -932,3 +932,11 @@ Runner: ended without finishing (exit 0), attempt 2; re-tagged from coder to sta
 ## 2026-10-03 B1.16 — done
 
 Implemented the decision store format in docs/decisions, created a template, and added a front-matter checker in scripts/check_decisions.py integrated into make check.
+
+## 2026-10-03 00:56 UTC B1.17 — runner
+
+Runner: ended without finishing (exit 0), attempt 1; retrying now.
+
+```
+
+```
