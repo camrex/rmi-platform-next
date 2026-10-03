@@ -744,3 +744,11 @@ untested draft from the failed local runs was there, with a test that failed). `
 module key. Tests patch `rmi_core.loader.entry_points`; no module package is installed yet, so the
 real-discovery test only checks the empty case (B1.13's `hello` modules will be the first real entry
 points, declared in their own `pyproject.toml`).
+
+## 2026-10-03 00:33 UTC B1.11 — runner
+
+Runner: ended without finishing (exit 0), attempt 1; retrying now.
+
+```
+
+```
