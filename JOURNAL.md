@@ -860,3 +860,30 @@ Runner: ended without finishing (exit 0), attempt 2; re-tagged from drudge to li
 4. Committed with clear message.
 
 **Result**: Task complete. The `--all-packages` flag causes uv to install all workspace members (modules) in addition to the main package, fixing the visibility issue in `rmi describe` and `load_modules()`.
+
+## 2026-10-03 B1.14 — done
+
+**What I did**: `core/src/rmi_core/testing/contract.py` (+ `__init__.py`): `assert_contract(manifest, candidates=None)`,
+the one call a module's `tests/test_contract.py` makes. Also `contract_problems`, `scenarios`, `build_app`.
+- Scenarios: all `uses` providers present, each one absent alone, none present (deduplicated). Providers are
+  the other installed `rmi.modules` entry points (or the `candidates` list); a provider brings its `requires`.
+- Per scenario: set resolves, module in load order, disabled features == absent `uses`; every GET page without path
+  parameters and every nav path answers no 5xx (handler exceptions count as 500; nav paths also < 400); internal
+  links in rendered HTML, and nav / link-kind paths in `describe`, must start with a loaded module key or a reserved
+  core prefix; `/api/v1/describe` answers and lists the module and its nav.
+- `build_app` mounts routers under `/<key>` and sets `app.state.seams = {seam name: impl}` (stand-in for the missing seam registry).
+- `hello_friend/seams.py::greeting_provider` now reads `request.app.state.seams`, so the contract test really exercises
+  with/without provider; its own tests (dependency override) are unchanged and pass.
+- `tests/test_contract.py` added to `hello`, `hello_friend` and the template. Negative tests in
+  `core/tests/test_contract_helper.py` (500, dead link, unsatisfied `requires`, scenario list).
+- Template brought up to the `hello` shape (B1.13 found it stale): `ModuleManifest`, `web.py`, `pyproject.toml` with the
+  entry point, `tests/test_contract.py`, `tests/test_page.py`; old `pages/` and `test_example.py` deleted.
+  `scripts/new_module.py` now substitutes in `.toml` too; `tests/scripts/test_new_module.py` imports the generated
+  `manifest` and runs `assert_contract` on it. `make check` green (127 tests).
+
+**Next run should know**:
+- `_RESERVED_KEYS` is imported from `manifest.py` (private name) as the set of core path prefixes; if core gains other
+  top-level paths (e.g. `/login`), add them there or make a public constant.
+- Link check only reads `href/src/action/hx-*` attributes of pages the module itself serves, not cards or JSON.
+- A generated module is only discovered by `load_modules()` after `make sync` (workspace member + entry point); `uv.lock` changes then.
+- `check-size` still has no recipe (B1.20b); contract.py is ~210 lines.

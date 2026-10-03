@@ -20,7 +20,7 @@ def create_module(key: str, base_dir: Path = Path("modules")):
     name = generate_name(key)
 
     for path in target_dir.rglob("*"):
-        if path.is_file() and (path.suffix == ".py" or path.suffix == ".md"):
+        if path.is_file() and (path.suffix in (".py", ".md", ".toml")):
             content = path.read_text()
             content = content.replace("{{MODULE_KEY}}", key)
             content = content.replace("{{MODULE_NAME}}", name)

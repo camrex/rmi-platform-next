@@ -1,0 +1,27 @@
+[project]
+name = "rmi-module-{{MODULE_KEY}}"
+version = "0.1.0"
+description = "{{MODULE_KEY}}: a module"
+requires-python = ">=3.12"
+dependencies = ["rmi-core"]
+
+[project.entry-points."rmi.modules"]
+{{MODULE_KEY}} = "modules.{{MODULE_KEY}}.manifest:manifest"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+# The module is the folder modules/{{MODULE_KEY}}/, imported as `modules.{{MODULE_KEY}}` from the
+# repo root; the editable install puts the repo root on the path.
+[tool.hatch.build.targets.wheel]
+bypass-selection = true
+
+[tool.hatch.build.targets.wheel.force-include]
+"." = "modules/{{MODULE_KEY}}"
+
+[tool.hatch.build]
+dev-mode-dirs = ["../.."]
+
+[tool.uv.sources]
+rmi-core = { workspace = true }
