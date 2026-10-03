@@ -32,7 +32,7 @@ dev = [
 [tool.ruff]
 line-length = 100
 target-version = "py312"
-extend-exclude = ["runner", "data", "docs", "**/*.md", "**/alembic/versions"]
+extend-exclude = ["runner", "data", "docs", "**/*.md", "**/alembic/versions", "modules/_template"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "C4", "SIM", "TID"]
@@ -56,3 +56,4 @@ asyncio_default_test_loop_scope = "function"
 pythonpath = ["."]
 testpaths = ["tests", "core/tests", "modules"]
 addopts = "-ra --strict-markers --import-mode=importlib -p no:anyio"
+norecursedirs = ["_template"]
