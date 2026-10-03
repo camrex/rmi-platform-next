@@ -1042,3 +1042,26 @@ operator's 2026-10-02 approval of the architecture proposal and all rulings.
 - Task B1.19 complete.
 - The decision file quotes approvals/architecture.md and cites the R-n table in PROPOSAL §12 by reference.
 - No new wording of the rulings was added; the file documents what was approved and ruled.
+
+## 2026-10-03 B1.20 — done
+
+Wrote `MAP.md` (layout, who owns which data, how to test, conventions) and `docs/ADDING_A_MODULE.md`
+(PROPOSAL §3.3 as eight steps, each with a command and a check), against what B1.6–B1.15 built.
+
+**Verified by doing it**: generated a throwaway module with `scripts/new_module.py`, ran `make sync`,
+`pytest modules/<key>` (2 passed), `rmi describe --compact` (listed it), ruff, pyright and
+core-clean (green), then added a migration chain (env.py copied from the sample chain,
+`versions/`, `metadata.py`) and `check_migrations.py` passed against the box's PostgreSQL. Removed the
+throwaway module and restored `uv.lock`; the tree holds only the two new docs, PLAN and this entry.
+
+**Found**:
+- `make sync` rewrites `uv.lock` when a module is added, and `check_module_isolation.py` flags it.
+  Added PLAN B1.20c [coder] to allow `uv.lock`; the doc says to commit the lock separately until then.
+- The core does not yet mount routers, offer a seam registry, links or cards, or act on
+  `db_schema`/`migrations`/`core_revision` (only the test app in `testing/contract.py` mounts
+  routers). Both docs say so; `hello_friend` reads its seam from `app.state.seams`.
+- The template ships `migrations/__init__.py` only, not an `env.py`/`metadata.py`; the doc's step 2
+  says to copy them from the sample chain. A template that includes them would be a worthwhile
+  follow-up for B1.21 to weigh.
+
+**Next run**: B1.20b (Makefile `check-size` recipe) is next unticked; B1.20c after it; then the B1.21 review.
