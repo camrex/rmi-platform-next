@@ -5,7 +5,7 @@ import sys
 from pathlib import Path
 
 MAX_LINES = 500
-TARGET_DIRS = ["core", "contracts", "modules", "scripts"]
+TARGET_DIRS = ["core", "contracts", "modules", "scripts", "tests"]
 
 
 def check_files(root: str = ".") -> bool:
