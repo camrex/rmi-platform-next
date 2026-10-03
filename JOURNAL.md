@@ -760,3 +760,28 @@ Runner: ended without finishing (exit 0), attempt 2; re-tagged from coder to sta
 ```
 
 ```
+
+## 2026-10-03 B1.11 — done
+
+**What I did**: `core/src/rmi_core/describe.py` and `core/tests/test_describe.py` (14 tests). `make check`
+green (113 tests). Added `fastapi` to core's dependencies, `httpx` to dev (TestClient), and the console
+script `rmi = rmi_core.describe:main` (`rmi describe [--compact]`; exit 1 with the problems on stderr if
+loading fails). `uv.lock` updated.
+- `describe(loaded, importer=...) -> dict` (pure, plain JSON, `describe_version` 1): `load_order`,
+  `modules` (each manifest dump, callables as dotted names, plus its `routes`), `disabled` (unsatisfied
+  `uses` with reason), `seams`, and flat lists `routes`, `nav`, `link_kinds`, `jobs` (each row tagged
+  `module`) and `permissions` (one row per module).
+- Seam rows: name, version, provider, `impl`, `contract`, `schemas`, `consumers` (module, requires/uses,
+  range, satisfied). The contract module is **`contracts.<key>_<name>.v<major>`** (`contract_module_name`);
+  `schemas` has one JSON Schema per pydantic model/dataclass *defined in* that module. A missing contract
+  gives `contract: null`; one that fails to import gives `contract_error`, never an exception.
+- `describe_router(loaded)` returns a FastAPI router with `GET /api/v1/describe`; the document is built once
+  at start-up.
+- Routes are listed as `/<key>` + the router's own path (CONTRACT: the core mounts routers under `/<key>/`).
+
+**Next run should know**: not yet in `describe`: dataset contracts, TIVS sub-modules, decisions (PROPOSAL §5
+lists them; they arrive with those services). `app.py` does not exist yet: it must
+`app.include_router(describe_router(load_modules()))`. `contracts/` is empty and not a package yet; the
+importer needs `contracts` importable (B1.13 `hello` will add the first contract, and must put
+`contracts.hello_greeting.v1` on the path). `docs/CONTRACT.md` was not edited. core's text avoids module
+keys (the check only inspects paths, but I kept it clean anyway).
