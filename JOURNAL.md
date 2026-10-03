@@ -903,3 +903,28 @@ Runner: ended without finishing (exit 0), attempt 2; re-tagged from coder to sta
 ```
 
 ```
+
+## 2026-10-03 B1.15 — done
+
+**What I did**: `scripts/check_migrations.py` and `make check-migrations` (added to `check` and `.PHONY`).
+- Uses `tests.harness.db` (`discover_chains`, scratch DB create/drop, `upgrade_async`): one scratch database,
+  chains upgraded in order (core first), always dropped. Each chain's tables = those that appeared while it upgraded
+  (its `alembic_version*` table excepted).
+- Drift = Alembic `compare_metadata` (types and server defaults compared) between the upgraded database and the chain's
+  `migrations/metadata.py::target_metadata`, limited to the chain's own tables plus the tables its models declare. So a
+  table the migrations create but the models lack, a missing/extra column, or a type change all fail. A failing upgrade
+  or a chain with no `metadata.py` is a problem too; other chains are still checked.
+- No chains: passes without a server. No server: prints SKIPPED and exits 0; with `RMI_REQUIRE_DB=1` it exits 1.
+  `--root DIR` scans another tree (used by the tests).
+- `tests/scripts/test_check_migrations.py`: 10 tests (matching chains, column/type/table drift, no metadata, failed upgrade,
+  scratch DB dropped, skip/require behaviour, the repo itself). DB tests skip without PostgreSQL. `docs/TESTING.md` updated.
+- `make check` green (137 tests). Today the repo has no real chain (`hello`'s `migrations/` has only `__init__.py`; core has none), so the
+  live run says "no migration chains found".
+
+**Next run should know**:
+- New convention, now in TESTING.md only: a chain's `migrations/` needs `metadata.py` defining `target_metadata`. The module
+  template/CONTRACT.md/ADDING_A_MODULE (B1.20) should mention it when a module first gets models; B2 core services must add
+  core's chain (`core/src/rmi_core/migrations/` with `env.py`, `versions/`, `metadata.py`).
+- CI has no PostgreSQL service, so the check skips there; add a service plus `RMI_TEST_ADMIN_DSN` and `RMI_REQUIRE_DB=1` later.
+- Sanity-checked on a temp root only; PostGIS/geometry types are not handled by the comparison yet (B3).
+- `check-size` still has no recipe (B1.20b).

@@ -47,6 +47,14 @@ async def test_something(db_session: AsyncSession) -> None:
   `config.attributes["url"]` (falling back to `sqlalchemy.url`) and keeps its own version table,
   `alembic_version_<chain>`. `tests/harness/sample_chain/env.py` is the model. Alembic runs in a
   worker thread (`db.upgrade_async`) or synchronously in the session fixture, never inside a test's loop.
+- **Migrations match models** (`make check-migrations`, `scripts/check_migrations.py`, part of
+  `make check`). It upgrades core and every chain in one scratch database, then runs Alembic's
+  autogenerate comparison per chain: the chain's `migrations/metadata.py` must define
+  `target_metadata` (the MetaData of its models) and the comparison must find nothing. The
+  chain's own tables (those that appeared while it upgraded) are compared; other chains' are
+  ignored; a table the migrations create and the models lack is drift. A chain with no
+  `metadata.py` fails; no chains at all passes. Unreachable server: skipped with a message, or a
+  failure with `RMI_REQUIRE_DB=1`.
 - **No server, no silent pass.** If PostgreSQL is unreachable, database tests skip with the reason;
   with `RMI_REQUIRE_DB=1` they fail instead. Set it wherever a server is expected.
 

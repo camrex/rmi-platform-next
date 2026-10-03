@@ -4,7 +4,7 @@
 export PATH := $(HOME)/.local/bin:$(PATH)
 UV ?= uv
 
-.PHONY: help sync lint format typecheck test check check-size check-core-clean check-isolation
+.PHONY: help sync lint format typecheck test check check-size check-core-clean check-migrations check-isolation
 help:
 	@echo "make sync | lint | format | typecheck | test | check | check-size"
 
@@ -28,9 +28,14 @@ test:
 check-core-clean:
 	$(UV) run python scripts/check_core_clean.py
 
+# Every migration chain upgrades from scratch and matches its models (docs/TESTING.md). Skips with a
+# message when PostgreSQL is unreachable; RMI_REQUIRE_DB=1 makes that a failure.
+check-migrations:
+	$(UV) run python scripts/check_migrations.py
+
 # Not part of `check` (it needs arguments): CI runs it on module branches.
 #   make check-isolation BASE=origin/main MODULE=sbis
 check-isolation:
 	$(UV) run python scripts/check_module_isolation.py $(BASE) --module $(MODULE)
 
-check: sync lint typecheck test check-size check-core-clean
+check: sync lint typecheck test check-size check-core-clean check-migrations
