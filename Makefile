@@ -4,9 +4,10 @@
 export PATH := $(HOME)/.local/bin:$(PATH)
 UV ?= uv
 
-.PHONY: help sync lint format typecheck test check check-size check-core-clean check-migrations check-isolation
+.PHONY: help sync lint format typecheck test check check-size check-core-clean check-migrations check-isolation check-decisions
 help:
 	@echo "make sync | lint | format | typecheck | test | check | check-size"
+
 
 sync:
 	$(UV) sync --python 3.12 --all-packages
@@ -33,9 +34,13 @@ check-core-clean:
 check-migrations:
 	$(UV) run python scripts/check_migrations.py
 
+check-decisions:
+	$(UV) run python scripts/check_decisions.py
+
 # Not part of `check` (it needs arguments): CI runs it on module branches.
+
 #   make check-isolation BASE=origin/main MODULE=sbis
 check-isolation:
 	$(UV) run python scripts/check_module_isolation.py $(BASE) --module $(MODULE)
 
-check: sync lint typecheck test check-size check-core-clean check-migrations
+check: sync lint typecheck test check-size check-core-clean check-migrations check-decisions
