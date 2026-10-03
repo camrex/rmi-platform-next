@@ -1212,3 +1212,12 @@ Runner: ended without finishing (exit 0), attempt 2; re-tagged from coder to sta
 ```
 
 ```
+
+## 2026-10-03 B1.25 — done
+
+**What I did**:
+- `core/src/rmi_core/describe.py`: `describe(loaded, *, importer, decisions_dir=DECISIONS_DIR)` now returns `decisions`: a list of `{id, title, status, kind}` from `docs/decisions/*.md`, sorted by file name, skipping `README.md` and `0000-template.md`. `id` is the `NNNN` filename prefix; `title` is the first `# ` heading with a leading `NNNN — ` removed (file stem if no heading); `status`/`kind` come from the front matter (null if missing). Absent folder gives `[]`. `DECISIONS_DIR` defaults to the repo's `docs/decisions` (found relative to the source file, so it is right for a checkout, not an installed wheel; there the folder is absent and the list is empty). Front matter is parsed with a small regex (no new dependency; core does not depend on pyyaml).
+- `core/tests/test_describe.py`: temp-folder test (skips, ordering, quoted values, no-front-matter file), absent folder, and the default repo folder.
+- `make check` green (160 tests).
+
+**Next run should know**: `rmi describe` and `/api/v1/describe` use the default folder; `describe_router` does not take `decisions_dir` yet. Next unticked task is B1.26.

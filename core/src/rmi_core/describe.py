@@ -13,6 +13,8 @@ Shape (`describe_version` 1):
 - `seams`: per seam offered: version, provider, `contract` (the module
   `contracts.<key>_<name>.v<major>`, null if none exists yet), `schemas` (one JSON Schema per
   pydantic model in it) and its consumers (`requires` / `uses`, whether satisfied).
+- `decisions`: id, title, status, kind of each `docs/decisions/NNNN-*.md` (front matter; `[]` if the
+  folder is absent).
 - `routes`, `nav`, `link_kinds`, `permissions`, `jobs`: the same facts from every module in
   one flat list, each row tagged with its `module`.
 """
@@ -23,8 +25,10 @@ import argparse
 import importlib
 import inspect
 import json
+import re
 import sys
 from collections.abc import Callable, Iterable, Sequence
+from pathlib import Path
 from types import ModuleType
 from typing import Any, cast
 
@@ -37,6 +41,7 @@ from .resolve import ResolutionError
 
 __all__ = [
     "DESCRIBE_PATH",
+    "DECISIONS_DIR",
     "DESCRIBE_VERSION",
     "contract_module_name",
     "describe",
@@ -47,6 +52,8 @@ __all__ = [
 
 DESCRIBE_VERSION = 1
 DESCRIBE_PATH = "/api/v1/describe"
+DECISIONS_DIR = Path(__file__).resolve().parents[3] / "docs" / "decisions"
+_NOT_DECISIONS = ("README.md", "0000-template.md")
 
 type Json = dict[str, Any]
 type ContractImporter = Callable[[str], ModuleType]
@@ -161,10 +168,45 @@ def _permissions(loaded: LoadedModules) -> list[Json]:
     return rows
 
 
+def _decisions(folder: Path) -> list[Json]:
+    """id (the `NNNN` file prefix), title (first `# ` heading), status and kind (front matter)."""
+    if not folder.is_dir():
+        return []
+    rows: list[Json] = []
+    for path in sorted(folder.glob("*.md")):
+        if path.name in _NOT_DECISIONS:
+            continue
+        text = path.read_text(encoding="utf-8")
+        block = re.match(r"^---\s*\n(.*?)\n---\s*\n", text, re.DOTALL)
+        fields: dict[str, str] = {}
+        for line in block.group(1).split("\n") if block else ():
+            key, sep, value = line.partition(":")
+            if sep and not key.startswith((" ", "-")):
+                fields[key.strip()] = value.strip().strip("\"'")
+        heading = re.search(r"^# (.+)$", text, re.MULTILINE)
+        decision_id = path.stem.split("-", 1)[0]
+        title = path.stem
+        if heading:
+            title = re.sub(rf"^{re.escape(decision_id)}\s*[—–-]\s*", "", heading.group(1).strip())
+        rows.append(
+            {
+                "id": decision_id,
+                "title": title,
+                "status": fields.get("status"),
+                "kind": fields.get("kind"),
+            }
+        )
+    return rows
+
+
 def describe(
-    loaded: LoadedModules, *, importer: ContractImporter = importlib.import_module
+    loaded: LoadedModules,
+    *,
+    importer: ContractImporter = importlib.import_module,
+    decisions_dir: Path = DECISIONS_DIR,
 ) -> Json:
-    """The whole description as a JSON-able dict. `importer` finds seam contract modules."""
+    """The whole description as a JSON-able dict. `importer` finds seam contract modules;
+    `decisions_dir` is the folder of decision records (absent folder: no decisions)."""
     modules: list[Json] = []
     routes: list[Json] = []
     for m in loaded.manifests:
@@ -185,6 +227,7 @@ def describe(
         "link_kinds": _flat(loaded, "links_offered"),
         "permissions": _permissions(loaded),
         "jobs": _flat(loaded, "jobs"),
+        "decisions": _decisions(decisions_dir),
     }
 
 

@@ -4,6 +4,7 @@ link kinds, seams with generated JSON Schemas, permissions, jobs. Module keys he
 from __future__ import annotations
 
 import json
+from pathlib import Path
 from types import ModuleType, SimpleNamespace
 from typing import Any
 from unittest.mock import patch
@@ -128,6 +129,36 @@ def test_empty_platform() -> None:
     result = doc()
     assert result["modules"] == [] and result["seams"] == [] and result["load_order"] == []
     assert result["describe_version"] == 1
+
+
+def test_decisions_come_from_front_matter(tmp_path: Path) -> None:
+    (tmp_path / "README.md").write_text("# Index\n")
+    (tmp_path / "0000-template.md").write_text("---\nstatus: open\nkind: x\n---\n# <Title>\n")
+    (tmp_path / "notes.txt").write_text("not markdown")
+    (tmp_path / "0002-b.md").write_text(
+        "---\nstatus: open\nkind: ruling\nrefs: []\n---\n# Second\n"
+    )
+    (tmp_path / "0001-a.md").write_text(
+        '---\nstatus: ruled\nkind: architecture\nsource_status: "Accepted"\n---\n'
+        "# 0001 \u2014 First one\n\nbody\n"
+    )
+    (tmp_path / "0003-c.md").write_text("no front matter\n")
+    result = describe(load(), importer=importer, decisions_dir=tmp_path)
+    assert result["decisions"] == [
+        {"id": "0001", "title": "First one", "status": "ruled", "kind": "architecture"},
+        {"id": "0002", "title": "Second", "status": "open", "kind": "ruling"},
+        {"id": "0003", "title": "0003-c", "status": None, "kind": None},
+    ]
+
+
+def test_absent_decisions_folder_gives_empty_list(tmp_path: Path) -> None:
+    result = describe(load(), importer=importer, decisions_dir=tmp_path / "nope")
+    assert result["decisions"] == []
+
+
+def test_default_decisions_folder_is_the_repo_one() -> None:
+    ids = [d["id"] for d in doc()["decisions"]]
+    assert "0001" in ids and "0000" not in ids
 
 
 def test_result_is_plain_json() -> None:
