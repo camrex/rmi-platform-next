@@ -1256,3 +1256,22 @@ Runner: ended without finishing (exit 0), attempt 2; re-tagged from drudge to li
 
 **Next run**: All Phase B1 tasks are now complete. Phase B2 is the next phase in PLAN.md.
 
+
+## 2026-10-03 B2 — done
+
+**What I did**: read MISSION, AGENTS, PLAN, docs/reviews/B1.md, PROPOSAL §3–§6.1 and §10, MAP.md, CONTRACT.md, the core source (manifest, loader, describe, contract helper), the harness, ADRs 0003/0013/0017/0020/0024 and the old platform's `platform_core` (access, audit, projects, parties, tokens) for what to port. Replaced the B2 placeholder with a "Phase B2" section in PLAN.md: **40 tasks, B2.1–B2.40**, each with a tier and an output path, plus a conventions block every B2 builder reads (core chain layout and revision naming, no `load_modules()` outside the roots, no module keys in core, `make check` green).
+
+**Shape of the breakdown** (order matters; later tasks use earlier ones):
+- B2.1–B2.3: split `manifest.py` (457 of 500 lines) first; add the `settings` manifest field (`SettingKey`); seam registry replacing `app.state.seams` (and `hello_friend` switches to it).
+- B2.4–B2.6 (coder, pure): units, `Quantity`/`Rate` (the #1213 tests), `Provenanced[T]`.
+- B2.7–B2.9: core migration chain, config/db, audit (append-only), revision counter (row-locked upsert, tested with two connections: #2023).
+- B2.10: `create_app` + `build()`; B2.28: worker root and `test_roots.py` proving both roots call `load_modules()` once and see the same set.
+- B2.11–B2.15: identity (users, session cookie, Portal OAuth with mock transport, PATs, `current_principal` and `/auth`); B2.16–B2.17 projects, sections, parties.
+- B2.18–B2.22: access (catalogue from manifests, role arithmetic, tables and `context_for`, guards, admin API). Capabilities are never implied by a role; `client` principals get nothing by default (#261).
+- B2.23–B2.24: settings with override-with-reason (nothing overwritten, history readable) and a reusable `Override` model for pricing and TIVS.
+- B2.25–B2.27, B2.29–B2.32: events (outbox, isolated dispatch), cron→ARQ conversion, jobs, link registry, `LinkStore` with unlink, cards with the `grant="host"` test pinned, typed validation provider.
+- B2.33–B2.37: kit shell with CSRF, components, launcher/project home, settings and access pages, a `check_kit_only` script. B2.38 `cli.py` + `migrate`; B2.39 docs; B2.40 heavy review.
+
+**Decisions I made, for the review to check**: (1) no Redis server on this box, so ARQ is wrapped behind `JobQueue` and tested with `InlineQueue` and a fake pool; (2) conversations, documents/storage and `Presence` are left out of B2 on purpose (built with the first module that needs them; `Presence` belongs to B3); (3) a project carries no valuation date (a TIVS run does); (4) core migrations live at `core/src/rmi_core/migrations/` (the harness already finds that path).
+
+**Next run should know**: the next unticked task is B2.1. No code was written this run. Local-tier tasks (B2.4–B2.6, B2.12, B2.17, B2.19, B2.23, B2.26, B2.34, B2.37) are pure functions or table copies sized for 16k context.
