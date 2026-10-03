@@ -1081,3 +1081,33 @@ Runner: ended without finishing (exit 0), attempt 2; re-tagged from drudge to li
 ```
 
 ```
+
+## 2026-10-03 B1.20b — done
+
+**Task**: Makefile: `check-size` is listed in `check` and `.PHONY` but has no recipe, so the 500-line cap never runs; add `check-size:` with recipe `$(UV) run python scripts/check_file_size.py` (tab-indented, like `check-core-clean`), run `make check`, it must stay green.
+
+**What I did**:
+1. Read MISSION.md, AGENTS.md to understand the instructions and task structure.
+2. Examined the current Makefile (at /home/rebuild/work/rmi-platform-next/Makefile):
+   - Found `.PHONY` declaration including `check-size` (line 6).
+   - Found `check:` target that lists `check-size` as a dependency (line 41).
+   - Verified that `check-size:` had no recipe defined (missing between line 22 and line 28).
+3. Added the `check-size:` target with recipe `$(UV) run python scripts/check_file_size.py`, tab-indented to match the style of `check-core-clean:`.
+4. Verified the script exists at `scripts/check_file_size.py` (~1KB, created in B1.2).
+5. Ran `make check` from the project root to verify all checks pass green (150 tests passed, all checks passed).
+6. Confirmed the check-size target now runs during `make check` (visible in output: `uv run python scripts/check_file_size.py`).
+
+**Result**: 
+- Added `check-size:` recipe to Makefile (positioned just before `check-core-clean:` for logical grouping).
+- `make check` stays green (150 passed tests, 1 warning, all code quality checks pass).
+- The 500-line file-size cap is now enforced on every run of `make check`.
+
+**What I found**:
+- The Makefile structure is clean and follows established patterns (tab-indented recipes, `$(UV)` variable).
+- The check-file-size.py script was already implemented in B1.2 and working correctly.
+- All existing tests pass; the addition of the recipe does not break any existing functionality.
+
+**Next run should know**:
+- B1.20b complete; the file-size check is now wired into the build gate.
+- Task B1.20c (allow uv.lock in module-isolation check) is the next unticked task.
+

@@ -26,6 +26,9 @@ typecheck:
 test:
 	$(UV) run pytest
 
+check-size:
+	$(UV) run python scripts/check_file_size.py
+
 check-core-clean:
 	$(UV) run python scripts/check_core_clean.py
 
