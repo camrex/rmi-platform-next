@@ -1065,3 +1065,11 @@ throwaway module and restored `uv.lock`; the tree holds only the two new docs, P
   follow-up for B1.21 to weigh.
 
 **Next run**: B1.20b (Makefile `check-size` recipe) is next unticked; B1.20c after it; then the B1.21 review.
+
+## 2026-10-03 06:37 UTC B1.20b — runner
+
+Runner: ended without finishing (exit 0), attempt 1; retrying now.
+
+```
+
+```
