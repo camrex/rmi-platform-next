@@ -1196,3 +1196,11 @@ Updated Ref.parse in core/src/rmi_core/refs.py to strictly validate schemes and 
 **Next run should know**:
 - A generated module now has a chain and `db_schema`, so `make check-migrations` creates its schema in the scratch DB. `hello` and `hello_friend` keep their empty `migrations/__init__.py` and have no `db_schema` (not chains, consistent).
 - `discover_chains` still finds chains by folder; the manifest check is separate and only runs from `scripts/check_migrations.py`, where it sees installed modules.
+
+## 2026-10-03 07:08 UTC B1.25 — runner
+
+Runner: ended without finishing (exit 0), attempt 1; retrying now.
+
+```
+
+```
