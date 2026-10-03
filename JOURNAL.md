@@ -1138,3 +1138,7 @@ Phase B1 review against PROPOSAL §3 and §5 -> `docs/reviews/B1.md`.
   [coder], B1.26 size check covers tests/ [drudge]. The B2 placeholder now points at the review.
 - **Next**: B1.22. None of the new tasks blocks B2, but they come before it in PLAN order.
   ci.yml has probably never run on GitHub; the first push after this will show whether it works.
+
+## 2026-10-03 B1.22 — done
+
+Updated Ref.parse in core/src/rmi_core/refs.py to strictly validate schemes and dataset/identifier presence. Added corresponding validation tests in core/tests/test_refs.py.

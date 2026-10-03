@@ -75,6 +75,30 @@ def test_ref_malformed():
         Ref.parse("oid:nodatasetid")
 
 
+def test_ref_validation():
+    # Empty dataset or id for gis/oid
+    with pytest.raises(ValueError, match="Dataset and identifier must both be present"):
+        Ref.parse("gis:ds:")
+
+    with pytest.raises(ValueError, match="Dataset and identifier must both be present"):
+        Ref.parse("oid::1")
+
+    # Unknown scheme (not gis, oid, or key.kind)
+    with pytest.raises(ValueError, match="Invalid scheme: foo"):
+        Ref.parse("foo:bar")
+
+    # Invalid key.kind schemes
+    with pytest.raises(ValueError, match="Invalid scheme: Sbis.x"):
+        Ref.parse("Sbis.x:1")
+
+    with pytest.raises(ValueError, match="Invalid scheme: a.b.c"):
+        Ref.parse("a.b.c:1")
+
+    # Valid key.kind schemes
+    assert Ref.parse("catalog.item:x").scheme == "catalog.item"
+    assert Ref.parse("tivs.asset:turnout/abc").scheme == "tivs.asset"
+
+
 def test_ref_frozen():
     ref = Ref.parse("gis:d:i")
     with pytest.raises(ValidationError):

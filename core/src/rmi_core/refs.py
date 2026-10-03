@@ -1,3 +1,5 @@
+import re
+
 from pydantic import BaseModel, ConfigDict
 
 
@@ -35,8 +37,18 @@ class Ref(BaseModel):
         if not scheme or not value:
             raise ValueError(f"Malformed ref: {s}. Scheme and value must both be present")
 
-        if scheme in ("gis", "oid") and ":" not in value:
-            raise ValueError(f"Malformed {scheme} ref: {s}. Expected format '{scheme}:dataset:id'")
+        if scheme in ("gis", "oid"):
+            if ":" not in value:
+                raise ValueError(
+                    f"Malformed {scheme} ref: {s}. Expected format '{scheme}:dataset:id'"
+                )
+            dataset, identifier = value.split(":", 1)
+            if not dataset or not identifier:
+                raise ValueError(
+                    f"Malformed {scheme} ref: {s}. Dataset and identifier must both be present"
+                )
+        elif not re.match(r"^[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*$", scheme):
+            raise ValueError(f"Invalid scheme: {scheme}. Expected 'gis', 'oid', or '<key>.<kind>'")
 
         return cls(scheme=scheme, value=value)
 
