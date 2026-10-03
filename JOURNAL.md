@@ -1111,3 +1111,7 @@ Runner: ended without finishing (exit 0), attempt 2; re-tagged from drudge to li
 - B1.20b complete; the file-size check is now wired into the build gate.
 - Task B1.20c (allow uv.lock in module-isolation check) is the next unticked task.
 
+
+## 2026-10-03 B1.20c — done
+
+Updated `scripts/check_module_isolation.py` and its tests to allow `uv.lock`. Updated `docs/ADDING_A_MODULE.md` to remove the known gap notice.
