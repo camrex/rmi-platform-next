@@ -177,3 +177,27 @@ def test_the_repo_itself_passes() -> None:
     if shutil.which("psql") is None and not (Path("/var/run/postgresql").exists()):
         pytest.skip("no PostgreSQL on this machine")
     assert check_migrations.run(REPO) == 0
+
+
+async def test_a_module_generated_from_the_template_upgrades_and_matches(
+    tmp_path: Path, admin: URL
+) -> None:
+    """The template's chain (env.py, versions/, metadata.py) works as shipped."""
+    from scripts.new_module import create_module
+
+    create_module("fresh_mod", base_dir=tmp_path / "modules")
+    chains = db.discover_chains(tmp_path)
+    assert [c.name for c in chains] == ["fresh_mod"]
+    assert await check_migrations.check_chains(chains, admin) == []
+
+
+def test_manifest_without_its_chain_fails_the_check(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    from rmi_core.manifest import ModuleManifest
+
+    m = ModuleManifest(
+        key="ghost", version="1", display_name="G", accent="slate", db_schema="ghost"
+    )
+    assert check_migrations.run(tmp_path, [m]) == 1
+    assert "ghost: declares db_schema" in capsys.readouterr().out

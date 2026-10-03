@@ -68,7 +68,7 @@ MANIFEST = ModuleManifest(
     key="sbis", version="1.0", display_name="Signal Bungalow Inventory", accent="teal",
     requires=[SeamRef("catalog.items", ">=1,<2"), SeamRef("pricing.prices", ">=1,<2")],
     uses=[SeamRef("pm.phase", ">=1,<2")],                      # absent -> feature off
-    schema="sbis", migrations="sbis/migrations", core_revision=">=0005",
+    db_schema="sbis", core_revision=">=0005",
     routers=[web.router, api.router],
     permissions=Permissions(facets=["edit:inventory"], capabilities=[]),
     nav=[Nav("Bungalows", "/sbis/bungalows"), Nav("RR Audit", "/sbis/rr-audit")],

@@ -114,7 +114,7 @@ def test_duplicate_keys_rejected() -> None:
 
 
 def test_core_revision_is_passed_to_resolve() -> None:
-    m = manifest("rev", db_schema="rev", migrations="rev/migrations", core_revision=">=2")
+    m = manifest("rev", db_schema="rev", core_revision=">=2")
     with discover(ep("rev", m)), pytest.raises(ResolutionError, match="core revision"):
         load_modules(core_revision="1")
         assert load_modules(core_revision="2").keys == ("rev",)

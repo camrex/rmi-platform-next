@@ -10,6 +10,7 @@ manifest = ModuleManifest(
     display_name="{{MODULE_NAME}}",
     accent="slate",
     description="Description of {{MODULE_KEY}}",
+    db_schema="{{MODULE_KEY}}",  # the chain is migrations/; delete both if there are no tables
     routers=[router],
     nav=[Nav("{{MODULE_NAME}}", "/{{MODULE_KEY}}")],
 )

@@ -49,7 +49,6 @@ def _good(**changes: Any) -> dict[str, Any]:
         "requires": [SeamRef("parts.items", ">=1,<2")],
         "uses": [SeamRef("planner.phase", ">=1,<2")],
         "db_schema": "shed",
-        "migrations": "shed/migrations",
         "core_revision": ">=0005",
         "routers": [_Router()],
         "permissions": Permissions(
@@ -146,7 +145,8 @@ def test_bad_ranges_rejected(bad: str) -> None:
         ({"nav": [Nav("Sheds", "/shed/s", facet="edit:roofs")]}, "not declared"),
         ({"gis": [Slot("a", "x"), Slot("a", "y")]}, "duplicate GIS slot"),
         ({"permissions": Permissions(facets=["edit:inventory"])}, "gis.write_back"),
-        ({"migrations": None}, "together"),
+        ({"db_schema": None}, "core_revision needs db_schema"),
+        ({"migrations": "shed/migrations"}, "migrations"),
         ({"catalog_refs": [CatalogRef("elsewhere.instance", "item_id")]}, "this module's schema"),
         ({"routers": [object()]}, "Router"),
         ({"cards_hosted": "viewer.pano"}, "not allowed as a Sequence"),

@@ -9,6 +9,8 @@ from sqlalchemy import text
 from sqlalchemy.engine import URL
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
+from rmi_core.manifest import ModuleManifest
+from rmi_core.testing.contract import installed_manifests
 from tests.harness import db
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -86,6 +88,37 @@ def test_chain_discovery_skips_the_template(tmp_path: Path) -> None:
     (tmp_path / "modules/nover/migrations/env.py").write_text("")
     chains = db.discover_chains(tmp_path)
     assert [c.name for c in chains] == ["core", "sbis"]
+
+
+def _manifest(key: str, *, schema: str | None) -> ModuleManifest:
+    return ModuleManifest(
+        key=key, version="1.0", display_name=key, accent="slate", db_schema=schema
+    )
+
+
+def _chain(root: Path, key: str) -> None:
+    (root / "modules" / key / "migrations" / "versions").mkdir(parents=True)
+    (root / "modules" / key / "migrations" / "env.py").write_text("")
+
+
+def test_manifest_and_chain_folder_must_agree(tmp_path: Path) -> None:
+    _chain(tmp_path, "both")
+    _chain(tmp_path, "forgot_schema")
+    (tmp_path / "modules" / "no_chain").mkdir()
+    manifests = [
+        _manifest("both", schema="both"),
+        _manifest("forgot_schema", schema=None),
+        _manifest("no_chain", schema="no_chain"),
+        _manifest("neither", schema=None),
+    ]
+    problems = db.manifest_chain_problems(manifests, tmp_path)
+    assert len(problems) == 2
+    assert problems[0].startswith("forgot_schema:") and "no db_schema" in problems[0]
+    assert problems[1].startswith("no_chain:") and "no env.py" in problems[1]
+
+
+def test_installed_modules_agree_with_their_chain_folder() -> None:
+    assert db.manifest_chain_problems(installed_manifests(), ROOT) == []
 
 
 def test_nothing_builds_the_schema_from_models() -> None:

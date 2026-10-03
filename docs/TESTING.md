@@ -45,7 +45,8 @@ async def test_something(db_session: AsyncSession) -> None:
 - **Chain convention** a chain is `migrations/` with `env.py` and `versions/` (under
   `core/src/<pkg>/` or `modules/<key>/`, never `_template`). Its `env.py` takes the URL from
   `config.attributes["url"]` (falling back to `sqlalchemy.url`) and keeps its own version table,
-  `alembic_version_<chain>`. `tests/harness/sample_chain/env.py` is the model. Alembic runs in a
+  `alembic_version_<chain>`. `tests/harness/sample_chain/env.py` is the model and `modules/_template/migrations/` ships the same. The
+  manifest must agree with the folder (`db.manifest_chain_problems`, run by `check-migrations`): `db_schema` is set exactly when `modules/<key>/migrations/` is a chain. Alembic runs in a
   worker thread (`db.upgrade_async`) or synchronously in the session fixture, never inside a test's loop.
 - **Migrations match models** (`make check-migrations`, `scripts/check_migrations.py`, part of
   `make check`). It upgrades core and every chain in one scratch database, then runs Alembic's

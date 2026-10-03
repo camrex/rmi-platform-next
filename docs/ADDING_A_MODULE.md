@@ -22,21 +22,26 @@ and the contract test cannot find the module. Check:
     uv run rmi describe --compact         # "load_order" lists "shed"
 
 You get `manifest.py`, `web.py` (one page at `/shed/`, nav item "Shed"), `README.md`,
-`pyproject.toml` (entry point `shed = "modules.shed.manifest:manifest"`), an empty
-`migrations/__init__.py`, and `tests/test_contract.py` + `tests/test_page.py`. Edit the
+`pyproject.toml` (entry point `shed = "modules.shed.manifest:manifest"`), a migration
+chain (`migrations/env.py`, `versions/0001_schema.py` creating the schema,
+`metadata.py`), and `tests/test_contract.py` + `tests/test_page.py`. Edit the
 `description`, `display_name` and `accent` in `manifest.py` and the README now.
 
 ## 2. Storage (skip if the module owns no tables)
 
-Declare `db_schema="shed"` and `migrations="shed/migrations"` together (the manifest rejects one
-without the other); add `core_revision=">=0005"` only once core has revisions. The core does not
-yet act on these fields; the harness finds chains by folder, so the folder rules matter:
+The template already ships the chain and declares `db_schema="shed"` in `manifest.py`. The chain is
+always `modules/shed/migrations/`; the manifest has no path field. `db_schema` is set exactly when
+that folder is a chain (`env.py` + `versions/`), and `make check-migrations` fails if they
+disagree. **No tables? Delete `migrations/`'s `env.py`, `versions/` and `metadata.py` and remove
+`db_schema` from `manifest.py`.** Add `core_revision=">=0005"` only once core has revisions. The
+core does not yet act on `core_revision`.
 
-1. `modules/shed/migrations/env.py`: copy `tests/harness/sample_chain/env.py` and change
-   `VERSION_TABLE` to `alembic_version_shed` (URL from `config.attributes["url"]`, own version table).
-2. `modules/shed/migrations/versions/0001_<what>.py`: create schema `shed` and the tables in it.
-3. `modules/shed/migrations/metadata.py` defining `target_metadata`, the `MetaData` of your models
-   (tables with `schema="shed"`). Models are `modules/shed/models.py`.
+1. `migrations/env.py` is done (version table `alembic_version_shed`, URL from
+   `config.attributes["url"]`). Do not edit it.
+2. `migrations/versions/0001_schema.py` creates schema `shed`. Add `0002_<what>.py`, ... for the
+   tables, in schema `shed` (`down_revision` is the previous revision).
+3. `migrations/metadata.py` defines `target_metadata`, already `MetaData(schema="shed")`; declare
+   your models on it (`modules/shed/models.py` imports it) so tables land in `shed.<table>`.
 4. Never `create_all` (a test fails the build on it); the schema comes only from migrations.
 
 Check: `make check-migrations` upgrades core and every chain in a scratch database and fails on any

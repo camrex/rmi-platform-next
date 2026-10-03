@@ -9,6 +9,7 @@ from __future__ import annotations
 import asyncio
 import os
 import secrets
+from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -18,6 +19,8 @@ from sqlalchemy import text
 from sqlalchemy.engine import URL, make_url
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy.pool import NullPool
+
+from rmi_core.manifest import ModuleManifest
 
 # The box's PostgreSQL 18, peer auth over the socket (docs/TESTING.md).
 DEFAULT_ADMIN_DSN = "postgresql://rebuild@/rmi?host=/var/run/postgresql"
@@ -94,6 +97,28 @@ def discover_chains(root: Path = REPO_ROOT) -> list[Chain]:
             name = label or parts[1]
             found.append(Chain(name=name, location=location))
     return found
+
+
+def manifest_chain_problems(
+    manifests: Iterable[ModuleManifest], root: Path = REPO_ROOT
+) -> list[str]:
+    """A module's chain lives at `modules/<key>/migrations/` (`env.py` + `versions/`), always.
+    The manifest says whether there is one: `db_schema` is set exactly when the chain exists, so
+    neither can be forgotten or left behind. One line per problem; empty when they agree."""
+    problems: list[str] = []
+    for m in manifests:
+        location = root / "modules" / m.key / "migrations"
+        has_chain = (location / "env.py").is_file() and (location / "versions").is_dir()
+        if m.db_schema is not None and not has_chain:
+            problems.append(
+                f"{m.key}: declares db_schema={m.db_schema!r} but modules/{m.key}/migrations/ "
+                "has no env.py and versions/"
+            )
+        if m.db_schema is None and has_chain:
+            problems.append(
+                f"{m.key}: modules/{m.key}/migrations/ is a chain but the manifest has no db_schema"
+            )
+    return problems
 
 
 def upgrade(url: URL, chains: list[Chain]) -> None:

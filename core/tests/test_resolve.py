@@ -27,7 +27,6 @@ def _m(
         uses=[SeamRef(n, r) for n, r in (uses or {}).items()],
         core_revision=core_revision,
         db_schema=key if core_revision else None,
-        migrations=f"{key}/migrations" if core_revision else None,
     )
 
 

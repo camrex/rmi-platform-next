@@ -361,8 +361,7 @@ class ModuleManifest(BaseModel):
     requires: Many[SeamRef] = ()
     uses: Many[SeamRef] = ()
 
-    db_schema: Key | None = None
-    migrations: str | None = None
+    db_schema: Key | None = None  # the chain is `modules/<key>/migrations/` (by convention)
     core_revision: VersionRange | None = None
 
     routers: SkipJsonSchema[Many[Router]] = Field(default=(), exclude=True)
@@ -448,10 +447,8 @@ class ModuleManifest(BaseModel):
             )
 
     def _check_storage(self) -> None:
-        if (self.db_schema is None) != (self.migrations is None):
-            raise ValueError("db_schema and migrations are declared together or not at all")
         if self.core_revision is not None and self.db_schema is None:
-            raise ValueError("core_revision needs db_schema and migrations")
+            raise ValueError("core_revision needs db_schema")
         for ref in self.catalog_refs:
             if self.db_schema is None or not ref.table.startswith(f"{self.db_schema}."):
                 raise ValueError(

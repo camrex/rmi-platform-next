@@ -34,7 +34,7 @@ act on those fields yet. Today a module's routers are mounted only by the test a
 
 | data | owner | status |
 |---|---|---|
-| a module's tables | that module: Postgres schema `<db_schema>` and its own Alembic chain (`modules/<key>/migrations/`, version table `alembic_version_<key>`) (ADR 0002) | convention built (B1.6, B1.15); `hello*` have no tables |
+| a module's tables | that module: Postgres schema `<db_schema>` and its own Alembic chain (`modules/<key>/migrations/`, version table `alembic_version_<key>`) (ADR 0002) | convention built (B1.6, B1.15, B1.24: manifest `db_schema` must match the folder); `hello*` have no tables |
 | core tables (identity, access, projects, audit, settings) | `rmi_core` chain, schema `core` | B2, not built |
 | synced GIS copies | the core's sync engine; modules read them through `gis=[Slot(...)]` | B3 |
 | catalog items and classes, prices and indexes | modules `catalog`, `pricing`; others reference them (`CatalogRef`, `pricing.price:` refs), never copy | B6, B8 |

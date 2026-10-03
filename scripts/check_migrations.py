@@ -10,6 +10,9 @@ A chain "owns" the tables that appeared in the database while it was upgraded (i
 `alembic_version*`, excepted). Other chains' tables are ignored when comparing, but a table the
 chain created and its models do not declare is drift.
 
+Each module's manifest must agree with its folder: `db_schema` is set exactly when
+`modules/<key>/migrations/` is a chain.
+
 No chains: passes without touching a server. No server: prints why and passes, unless
 RMI_REQUIRE_DB=1 (then it fails). Exit 0 = ok or skipped, 1 = problems.
 
@@ -23,6 +26,7 @@ import asyncio
 import importlib.util
 import os
 import sys
+from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
 
@@ -37,6 +41,8 @@ from sqlalchemy.engine import URL  # noqa: E402
 from sqlalchemy.ext.asyncio import AsyncConnection, create_async_engine  # noqa: E402
 from sqlalchemy.pool import NullPool  # noqa: E402
 
+from rmi_core.manifest import ModuleManifest  # noqa: E402
+from rmi_core.testing.contract import installed_manifests  # noqa: E402
 from tests.harness import db  # noqa: E402
 
 METADATA_FILE = "metadata.py"
@@ -160,7 +166,14 @@ async def check_chains(chains: list[db.Chain], admin: URL) -> list[str]:
     return problems
 
 
-def run(root: Path) -> int:
+def run(root: Path, manifests: Sequence[ModuleManifest] = ()) -> int:
+    """Check `manifests` against the chain folders, then upgrade and compare every chain."""
+    mismatches = db.manifest_chain_problems(manifests, root)
+    if mismatches:
+        print("Migrations check failed:")
+        for problem in mismatches:
+            print(f"  - {problem}")
+        return 1
     chains = db.discover_chains(root)
     if not chains:
         print("Migrations check: no migration chains found, nothing to check.")
@@ -186,7 +199,7 @@ def run(root: Path) -> int:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", type=Path, default=REPO_ROOT, help="repo root to scan")
-    sys.exit(run(parser.parse_args().root))
+    sys.exit(run(parser.parse_args().root, installed_manifests()))
 
 
 if __name__ == "__main__":

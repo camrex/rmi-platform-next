@@ -1182,3 +1182,17 @@ Updated Ref.parse in core/src/rmi_core/refs.py to strictly validate schemes and 
 - B1.23 complete; CI now runs database tests.
 - First push to GitHub after this commit will be the real test (ci.yml has probably never run on GitHub before, per B1.21 review).
 - The next unticked task is B1.24 (migration chain convention).
+
+## 2026-10-03 B1.24 — done
+
+**What I did** (one way: the chain is always `modules/<key>/migrations/`; the manifest's `db_schema` says whether it exists):
+- `modules/_template/migrations/`: added `env.py` (from `tests/harness/sample_chain/env.py`, version table `alembic_version_{{MODULE_KEY}}`), `versions/0001_schema.py` (creates the module's schema) and `metadata.py` (`target_metadata = MetaData(schema="{{MODULE_KEY}}")`). The template manifest now sets `db_schema="{{MODULE_KEY}}"`.
+- `core/src/rmi_core/manifest.py`: dropped the free-string `migrations` field (extra=forbid now rejects it); `core_revision` still needs `db_schema`.
+- `tests/harness/db.py`: `manifest_chain_problems(manifests, root)`: `db_schema` set without a chain folder, or a chain folder without `db_schema`, is a problem. `scripts/check_migrations.py` runs it on the installed manifests first (`make check-migrations`).
+- Tests: manifest (`migrations` rejected, `core_revision` without `db_schema`), `test_db_harness.py` (agreement, and the installed modules agree), `test_new_module.py` (generated chain files, no leftover `{{`, `db_schema == key`), `test_check_migrations.py` (a module generated from the template upgrades and has no drift; a manifest with no chain fails the check). Existing loader/resolve tests lost their `migrations=` argument.
+- Docs: CONTRACT.md Storage row, ADDING_A_MODULE.md steps 1-2 (and how to opt out when no tables), TESTING.md chain convention, MAP.md, PROPOSAL.md example (`db_schema="sbis"`).
+- `make check` green: 157 tests, DB tests ran against the local PostgreSQL.
+
+**Next run should know**:
+- A generated module now has a chain and `db_schema`, so `make check-migrations` creates its schema in the scratch DB. `hello` and `hello_friend` keep their empty `migrations/__init__.py` and have no `db_schema` (not chains, consistent).
+- `discover_chains` still finds chains by folder; the manifest check is separate and only runs from `scripts/check_migrations.py`, where it sees installed modules.

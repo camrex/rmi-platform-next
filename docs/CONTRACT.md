@@ -35,8 +35,8 @@ Modules never import each other; a seam, a link or a card is the only way across
 
 | field | means | gets the module |
 |---|---|---|
-| `db_schema`, `migrations` | its Postgres schema and Alembic chain (declared together) | the chain run at deploy and from scratch in tests (`docs/TESTING.md`) |
-| `core_revision` | the core migration range it was written against | start-up fails when core is outside it |
+| `db_schema` | its Postgres schema. The Alembic chain is not declared: it is always `modules/<key>/migrations/` (`env.py`, `versions/`, `metadata.py`, version table `alembic_version_<key>`). `db_schema` is set exactly when that folder is a chain (`env.py` + `versions/`); `make check-migrations` fails if they disagree | the chain run at deploy and from scratch in tests (`docs/TESTING.md`) |
+| `core_revision` | the core migration range it was written against (needs `db_schema`) | start-up fails when core is outside it |
 | `catalog_refs: CatalogRef(table, column)` | a column in its own schema holding a catalog item id | catalog merge and delete carry or block on it ("who points at me", §7.5) |
 
 ## Web, permissions, work
