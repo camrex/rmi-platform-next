@@ -785,3 +785,7 @@ lists them; they arrive with those services). `app.py` does not exist yet: it mu
 importer needs `contracts` importable (B1.13 `hello` will add the first contract, and must put
 `contracts.hello_greeting.v1` on the path). `docs/CONTRACT.md` was not edited. core's text avoids module
 keys (the check only inspects paths, but I kept it clean anyway).
+
+## 2026-10-03 B1.12 — done
+
+Created modules/_template/ with basic package structure, manifest, and tests. Implemented scripts/new_module.py to bootstrap new modules and added tests/scripts/test_new_module.py. Updated pyproject.toml to exclude template from linting and testing.
