@@ -1237,3 +1237,22 @@ Runner: ended without finishing (exit 0), attempt 2; re-tagged from drudge to li
 ```
 
 ```
+
+## 2026-10-03 B1.26 — done
+
+**Task**: `scripts/check_file_size.py`: add `"tests"` to `TARGET_DIRS`; run `~/.local/bin/make check`, it must stay green.
+
+**What I did**:
+1. Read MISSION.md, AGENTS.md, PLAN.md, and last journal entries to understand the task.
+2. Verified that `"tests"` had already been added to `TARGET_DIRS` in commit 045f271 (previous attempt).
+3. Ran `make check` to confirm all tests pass and file size check passes.
+4. Confirmed `scripts/check_file_size.py` contains `TARGET_DIRS = ["core", "contracts", "modules", "scripts", "tests"]`.
+5. Ticked task B1.26 in PLAN.md.
+
+**Result**: 
+- Task completed: `"tests"` is in `TARGET_DIRS` at line 8 of `scripts/check_file_size.py`.
+- `make check` passes (160 tests, all checks pass, no violations).
+- PLAN.md task B1.26 is now ticked.
+
+**Next run**: All Phase B1 tasks are now complete. Phase B2 is the next phase in PLAN.md.
+
