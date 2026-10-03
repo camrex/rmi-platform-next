@@ -1,109 +1,125 @@
+"""`load_modules()` finds manifests through the `rmi.modules` entry point and resolves them."""
+
 from __future__ import annotations
 
-from unittest.mock import MagicMock, patch
+from types import SimpleNamespace
+from typing import Any
+from unittest.mock import patch
 
 import pytest
 
-from rmi_core.loader import load_modules
-from rmi_core.manifest import ModuleManifest
+from rmi_core.loader import ENTRY_POINT_GROUP, load_modules
+from rmi_core.manifest import ModuleManifest, SeamImpl, SeamRef
 from rmi_core.resolve import ResolutionError
 
 
-@pytest.fixture
-def mock_manifest_a():
-    return ModuleManifest(
-        key="mod_a",
-        version="1.0",
-        display_name="Mod A",
-        accent="blue",
-    )
+def manifest(key: str, **kw: Any) -> ModuleManifest:
+    return ModuleManifest(key=key, version="1.0", display_name=key.title(), accent="teal", **kw)
 
 
-@pytest.fixture
-def mock_manifest_b():
-    return ModuleManifest(
-        key="mod_b",
-        version="1.0",
-        display_name="Mod B",
-        accent="green",
-    )
+def ep(name: str, target: object = None, *, error: Exception | None = None) -> Any:
+    def load() -> object:
+        if error is not None:
+            raise error
+        return target
+
+    return SimpleNamespace(name=name, load=load)
 
 
-def test_load_modules_success(mock_manifest_a, mock_manifest_b):
-    # Mock entry points
-    ep_a = MagicMock()
-    ep_a.name = "mod_a"
-    ep_a.load.return_value = mock_manifest_a
+def discover(*eps: Any) -> Any:
+    """Patch discovery; also records the group asked for."""
 
-    ep_b = MagicMock()
-    ep_b.name = "mod_b"
-    ep_b.load.return_value = mock_manifest_b
+    def fake(*, group: str) -> list[Any]:
+        assert group == ENTRY_POINT_GROUP == "rmi.modules"
+        return list(eps)
 
-    with patch("rmi_core.loader.entry_points") as mock_eps:
-        mock_eps.return_value = [ep_a, ep_b]
-        res, manifests = load_modules()
-
-    assert res.load_order == ("mod_a", "mod_b") or res.load_order == ("mod_b", "mod_a")
-    assert manifests == {"mod_a": mock_manifest_a, "mod_b": mock_manifest_b}
+    return patch("rmi_core.loader.entry_points", fake)
 
 
-def test_load_modules_type_error():
-    ep = MagicMock()
-    ep.name = "bad_mod"
-    ep.load.return_value = "not a manifest"
-
-    with patch("rmi_core.loader.entry_points") as mock_eps:
-        mock_eps.return_value = [ep]
-        with pytest.raises(TypeError, match="did not return a ModuleManifest"):
-            load_modules()
+def test_empty_set_loads() -> None:
+    with discover():
+        loaded = load_modules()
+    assert loaded.keys == () and loaded.manifests == () and loaded.disabled == ()
 
 
-def test_load_modules_resolution_error(mock_manifest_a):
-    # Create a manifest that requires something that doesn't exist
-    from rmi_core.manifest import SeamRef
-
-    manifest_fail = ModuleManifest(
-        key="mod_fail",
-        version="1.0",
-        display_name="Fail",
-        accent="red",
-        requires=[SeamRef(name="missing.seam", range=">=1")],
-    )
-
-    ep = MagicMock()
-    ep.name = "mod_fail"
-    ep.load.return_value = manifest_fail
-
-    with patch("rmi_core.loader.entry_points") as mock_eps:
-        mock_eps.return_value = [ep]
-        with pytest.raises(ResolutionError, match="no loaded module offers seam 'missing.seam'"):
-            load_modules()
+def test_loads_in_load_order_providers_first() -> None:
+    parts = manifest("parts", seams_offered=[SeamImpl("parts.items", "1.0", object())])
+    shed = manifest("shed", requires=[SeamRef(name="parts.items", range=">=1,<2")])
+    with discover(ep("shed", shed), ep("parts", parts)):
+        loaded = load_modules()
+    assert loaded.keys == ("parts", "shed")
+    assert loaded.manifests == (parts, shed)
+    assert loaded.get("shed") is shed
+    assert loaded.get("nope") is None
 
 
-def test_load_modules_core_revision(mock_manifest_a):
-    # Manifest that requires core revision 2.0
-    manifest_rev = ModuleManifest(
-        key="mod_rev",
-        version="1.0",
-        display_name="Rev",
-        accent="blue",
-        core_revision=">=2.0",
-        db_schema="mod_rev",
-        migrations="v1",
-    )
+def test_absent_uses_is_reported_not_fatal() -> None:
+    friend = manifest("friend", uses=[SeamRef(name="hello.greeting", range=">=1,<2")])
+    with discover(ep("friend", friend)):
+        loaded = load_modules()
+    assert loaded.keys == ("friend",)
+    assert [(d.module, d.seam) for d in loaded.disabled] == [("friend", "hello.greeting")]
 
-    ep = MagicMock()
-    ep.name = "mod_rev"
-    ep.load.return_value = manifest_rev
 
-    with patch("rmi_core.loader.entry_points") as mock_eps:
-        mock_eps.return_value = [ep]
-        # Should fail with core_revision "1.0"
-        with pytest.raises(
-            ResolutionError, match="needs core revision '>=2.0', but core is at '1.0'"
-        ):
-            load_modules(core_revision="1.0")
-        # Should succeed with core_revision "2.0"
-        res, manifests = load_modules(core_revision="2.0")
-        assert res.load_order == ("mod_rev",)
-        assert manifests == {"mod_rev": manifest_rev}
+def test_unsatisfied_requires_fails_naming_module_and_range() -> None:
+    shed = manifest("shed", requires=[SeamRef(name="parts.items", range=">=1,<2")])
+    with (
+        discover(ep("shed", shed)),
+        pytest.raises(ResolutionError, match=r"module 'shed' requires seam 'parts.items'"),
+    ):
+        load_modules()
+
+
+def test_not_a_manifest_names_the_entry_point() -> None:
+    with (
+        discover(ep("bad", "not a manifest")),
+        pytest.raises(ResolutionError, match="entry point 'bad' did not return a ModuleManifest"),
+    ):
+        load_modules()
+
+
+def test_import_failure_names_the_entry_point() -> None:
+    with (
+        discover(ep("broken", error=ImportError("no module x"))),
+        pytest.raises(ResolutionError, match="entry point 'broken' failed to load"),
+    ):
+        load_modules()
+
+
+def test_entry_point_name_must_equal_manifest_key() -> None:
+    with (
+        discover(ep("alias", manifest("real"))),
+        pytest.raises(
+            ResolutionError, match="entry point 'alias' returned a manifest with key 'real'"
+        ),
+    ):
+        load_modules()
+
+
+def test_every_load_problem_is_reported_together() -> None:
+    with (
+        discover(ep("a", 1), ep("b", error=RuntimeError("boom"))),
+        pytest.raises(ResolutionError) as info,
+    ):
+        load_modules()
+    assert len(info.value.problems) == 2
+
+
+def test_duplicate_keys_rejected() -> None:
+    with (
+        discover(ep("a", manifest("a")), ep("a", manifest("a"))),
+        pytest.raises(ResolutionError, match="duplicate"),
+    ):
+        load_modules()
+
+
+def test_core_revision_is_passed_to_resolve() -> None:
+    m = manifest("rev", db_schema="rev", migrations="rev/migrations", core_revision=">=2")
+    with discover(ep("rev", m)), pytest.raises(ResolutionError, match="core revision"):
+        load_modules(core_revision="1")
+        assert load_modules(core_revision="2").keys == ("rev",)
+
+
+def test_real_discovery_with_nothing_installed() -> None:
+    """No patching: the real entry point group is queried (no module is installed yet)."""
+    assert isinstance(load_modules().keys, tuple)

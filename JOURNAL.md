@@ -724,3 +724,23 @@ Runner: ended without finishing (exit 0), attempt 2; re-tagged from coder to sta
 ```
 
 ```
+
+## 2026-10-02 B1.10 — done
+
+**What I did**: rewrote `core/src/rmi_core/loader.py` and `core/tests/test_loader.py` (11 tests; an
+untested draft from the failed local runs was there, with a test that failed). `make check` green (99 tests).
+- `load_modules(*, core_revision=None) -> LoadedModules(manifests, resolution)`; `.keys` (load order),
+  `.disabled` (unsatisfied `uses`), `.get(key)`. `manifests` is a tuple in load order, providers first.
+- Discovery: `importlib.metadata.entry_points(group="rmi.modules")`; `ENTRY_POINT_GROUP` is exported.
+  Each entry point loads to a `ModuleManifest` (an object, e.g. `rmi_hello.manifest:MANIFEST`).
+- Load problems (import failure, not a `ModuleManifest`, entry-point name != manifest key) are
+  collected and raised together as one `ResolutionError` naming each entry point, then `resolve`'s
+  own errors follow for the rest (duplicates, unsatisfied `requires`, cycles, `core_revision`).
+- Rule I chose: **the entry point name must equal the manifest key**, so `pip`-level metadata and the
+  manifest cannot disagree.
+
+**Next run (B1.11, B1.14) should know**: `app.py`/`worker.py` do not exist yet; they must call
+`load_modules()` and nothing else to find modules. `LoadedModules.resolution.providers` maps seam ->
+module key. Tests patch `rmi_core.loader.entry_points`; no module package is installed yet, so the
+real-discovery test only checks the empty case (B1.13's `hello` modules will be the first real entry
+points, declared in their own `pyproject.toml`).
