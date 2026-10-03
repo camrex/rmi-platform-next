@@ -120,5 +120,4 @@ owns data.
 
 The second fails if the diff touches anything outside `modules/shed/`, `contracts/shed_*` and
 `docs/`. A module PR edits no `core/` file; if you need one, that is a core task, not part of the
-module. **Known gap:** `make sync` rewrites `uv.lock` when a module is added, and the isolation
-check flags it; commit `uv.lock` separately from the module (PLAN B1.20c).
+module. `uv.lock` is allowed.

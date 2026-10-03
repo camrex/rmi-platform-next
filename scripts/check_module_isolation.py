@@ -16,7 +16,7 @@ from collections.abc import Sequence
 from pathlib import Path
 
 KEY_RE = re.compile(r"[a-z][a-z0-9_]*")
-ALWAYS_ALLOWED = ("docs/",)
+ALWAYS_ALLOWED = ("docs/", "uv.lock")
 
 
 def is_allowed(path: str, module: str) -> bool:

@@ -44,6 +44,7 @@ def test_is_allowed():
     assert is_allowed("modules/sbis/x/y.py", "sbis")
     assert is_allowed("contracts/sbis_bungalow.py", "sbis")
     assert is_allowed("docs/anything.md", "sbis")
+    assert is_allowed("uv.lock", "sbis")
     assert not is_allowed("modules/sbis2/x.py", "sbis")
     assert not is_allowed("modules/sbis", "sbis")
     assert not is_allowed("modules/civ/x.py", "sbis")
