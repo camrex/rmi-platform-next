@@ -887,3 +887,11 @@ the one call a module's `tests/test_contract.py` makes. Also `contract_problems`
 - Link check only reads `href/src/action/hx-*` attributes of pages the module itself serves, not cards or JSON.
 - A generated module is only discovered by `load_modules()` after `make sync` (workspace member + entry point); `uv.lock` changes then.
 - `check-size` still has no recipe (B1.20b); contract.py is ~210 lines.
+
+## 2026-10-03 00:50 UTC B1.15 — runner
+
+Runner: ended without finishing (exit 0), attempt 1; retrying now.
+
+```
+
+```
