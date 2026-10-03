@@ -1204,3 +1204,11 @@ Runner: ended without finishing (exit 0), attempt 1; retrying now.
 ```
 
 ```
+
+## 2026-10-03 07:09 UTC B1.25 — runner
+
+Runner: ended without finishing (exit 0), attempt 2; re-tagged from coder to standard after 2 failed local runs; attempts reset; retrying now.
+
+```
+
+```
