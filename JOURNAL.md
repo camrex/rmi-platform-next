@@ -831,3 +831,11 @@ earlier runs left half-edited copies and no `pyproject.toml`, which broke `uv sy
   installed); `uv sync --all-packages` installs them. Outside this task's folders, so added as B1.13b.
 - Modules import as `modules.<key>` (namespace package from the repo root, `pythonpath = ["."]`); the entry point targets
   that name, so the editable install of a module needs the repo root on the path (`dev-mode-dirs = ["../.."]` in its pyproject).
+
+## 2026-10-03 00:45 UTC B1.13b — runner
+
+Runner: ended without finishing (exit 0), attempt 1; retrying now.
+
+```
+
+```
