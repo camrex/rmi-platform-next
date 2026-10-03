@@ -928,3 +928,7 @@ Runner: ended without finishing (exit 0), attempt 2; re-tagged from coder to sta
 - CI has no PostgreSQL service, so the check skips there; add a service plus `RMI_TEST_ADMIN_DSN` and `RMI_REQUIRE_DB=1` later.
 - Sanity-checked on a temp root only; PostGIS/geometry types are not handled by the comparison yet (B3).
 - `check-size` still has no recipe (B1.20b).
+
+## 2026-10-03 B1.16 — done
+
+Implemented the decision store format in docs/decisions, created a template, and added a front-matter checker in scripts/check_decisions.py integrated into make check.
