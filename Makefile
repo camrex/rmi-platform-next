@@ -9,7 +9,7 @@ help:
 	@echo "make sync | lint | format | typecheck | test | check | check-size"
 
 sync:
-	$(UV) sync --python 3.12
+	$(UV) sync --python 3.12 --all-packages
 
 lint:
 	$(UV) run ruff check .
