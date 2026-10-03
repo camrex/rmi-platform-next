@@ -68,6 +68,24 @@ class TestCoreClean(unittest.TestCase):
             self.assertIn("Core-is-clean check failed", res.stdout)
             self.assertIn("core/my_module.py", res.stdout)
 
+    def test_core_clean_fails_on_a_key_in_source_content(self) -> None:
+        """PROPOSAL §3.1: CI greps core/ for module keys, not only file names (B1.21)."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmp_path = Path(tmpdir)
+            (tmp_path / "scripts").mkdir()
+            shutil.copy("scripts/check_core_clean.py", tmp_path / "scripts/check_core_clean.py")
+            (tmp_path / "core/src/pkg").mkdir(parents=True)
+            (tmp_path / "modules/shed").mkdir(parents=True)
+            (tmp_path / "core/src/pkg/a.py").write_text('PREFIX = "/sbis/"\n')
+            (tmp_path / "core/src/pkg/b.py").write_text('X = "shed.thing"\n')
+            (tmp_path / "core/src/pkg/ok.py").write_text('Y = "sbis_like catalog.item SBIS"\n')
+
+            res = self.run_check_script(tmpdir)
+            self.assertEqual(res.returncode, 1)
+            self.assertIn("core/src/pkg/a.py:1", res.stdout)
+            self.assertIn("core/src/pkg/b.py:1", res.stdout)
+            self.assertNotIn("ok.py", res.stdout)
+
 
 if __name__ == "__main__":
     unittest.main()

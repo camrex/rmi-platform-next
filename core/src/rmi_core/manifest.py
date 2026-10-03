@@ -10,7 +10,7 @@ frozen. Lists are accepted and stored as tuples. Callables (routers, jobs, handl
 implementations) are excluded from the JSON form; `describe` shows their dotted names instead.
 
 The parts are pydantic dataclasses so a manifest reads as in the proposal:
-`SeamRef("catalog.items", ">=1,<2")`, `Nav("Pages", "/hello/pages")`.
+`SeamRef("catalog.items", ">=1,<2")`, `Nav("Pages", "/shed/pages")`.
 """
 
 from __future__ import annotations

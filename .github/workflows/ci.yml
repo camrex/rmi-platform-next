@@ -18,8 +18,5 @@ jobs:
       - uses: astral-sh/setup-uv@v3
         with:
           version: "0.12.22"
-      - name: Install make (if not present)
-        run: |
-          which make || apt-get update && apt-get install -y make
       - name: Run make check
         run: make check

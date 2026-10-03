@@ -5,10 +5,16 @@ from typing import Any
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from contracts.hello_greeting.v1 import GreetingV1
-from modules.hello.seams import Greeter
+from contracts.hello_greeting.v1 import Greeting, GreetingV1
 from modules.hello_friend.manifest import manifest
 from modules.hello_friend.seams import greeting_provider
+
+
+class Greeter:
+    """A stand-in provider: modules never import each other, even in tests (PROPOSAL §3.3)."""
+
+    def greet(self, who: str) -> Greeting:
+        return Greeting(who=who, message=f"Hello, {who}!")
 
 
 def client(provider: GreetingV1 | None) -> Any:

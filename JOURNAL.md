@@ -1115,3 +1115,26 @@ Runner: ended without finishing (exit 0), attempt 2; re-tagged from drudge to li
 ## 2026-10-03 B1.20c — done
 
 Updated `scripts/check_module_isolation.py` and its tests to allow `uv.lock`. Updated `docs/ADDING_A_MODULE.md` to remove the known gap notice.
+
+## 2026-10-03 B1.21 — done
+
+Phase B1 review against PROPOSAL §3 and §5 -> `docs/reviews/B1.md`.
+
+- **Clean clone**: `git clone` to /tmp, `~/.local/bin/make check` green (150 passed, pyright 0
+  errors, harness tests ran on PostgreSQL 18, 8 s).
+- **Fixed**: `scripts/check_core_clean.py` only checked file names; it now also scans `core/src/`
+  source lines for module keys as whole words. `catalog` and `pricing` are exempt from the content
+  scan because the `Ref` forms and `catalog_refs` name them by design. The scan caught
+  `/hello/pages` in a `manifest.py` docstring, which is now `/shed/pages`. Added a test.
+  `.github/workflows/ci.yml` had a broken `which make || apt-get update && apt-get install` step
+  that always runs apt-get without sudo; removed it. `hello_friend`'s test imported
+  `modules.hello`; it now uses a local stand-in provider. `make check` green, 151 passed.
+- **Contract vs B2**: enough. Every registry B2 builds (access, nav and shell, routes, seams, links,
+  cards, events, jobs, validation) reads fields that exist. Settings has no manifest field yet;
+  that is by design (CONTRACT.md), and the B2 line now says to add it. The `migrations` field is a
+  free string nothing reads (B1.24).
+- **Filed**: B1.22 Ref validation [coder], B1.23 CI PostgreSQL service [light], B1.24
+  migration chain in template + manifest agreement [standard], B1.25 decisions in describe
+  [coder], B1.26 size check covers tests/ [drudge]. The B2 placeholder now points at the review.
+- **Next**: B1.22. None of the new tasks blocks B2, but they come before it in PLAN order.
+  ci.yml has probably never run on GitHub; the first push after this will show whether it works.
