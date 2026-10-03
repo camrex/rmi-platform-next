@@ -1221,3 +1221,11 @@ Runner: ended without finishing (exit 0), attempt 2; re-tagged from coder to sta
 - `make check` green (160 tests).
 
 **Next run should know**: `rmi describe` and `/api/v1/describe` use the default folder; `describe_router` does not take `decisions_dir` yet. Next unticked task is B1.26.
+
+## 2026-10-03 07:11 UTC B1.26 — runner
+
+Runner: ended without finishing (exit 0), attempt 1; retrying now.
+
+```
+
+```
