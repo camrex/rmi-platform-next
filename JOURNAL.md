@@ -1015,3 +1015,30 @@ Runner: ended without finishing (exit 0), attempt 2; re-tagged from drudge to li
 ```
 
 ```
+
+## 2026-10-03 B1.19 — done
+
+**Task**: Record the operator's 2026-10-02 approval as a decision (`status: ruled`): one file quoting
+`approvals/architecture.md` and the R-n table of PROPOSAL §12 by reference, no new wording of the
+rulings.
+
+**What I did**:
+1. Read MISSION.md, AGENTS.md, PLAN.md to understand the task requirements.
+2. Examined the approvals/architecture.md file (full approval text and all rulings).
+3. Reviewed the R-n table in docs/architecture/PROPOSAL.md §12 (R-1 through R-14, R-13a).
+4. Read the decision store format: front matter (status, kind, date, refs), body with markdown.
+5. Created `docs/decisions/0101-operator-approval-architecture-2026-10-02.md` with:
+   - Front matter: `status: ruled`, `kind: architecture`, `date: 2026-10-02`, refs to the approval and proposal
+   - Approval section quoting the operator's words from approvals/architecture.md
+   - Rulings section listing all R-n decisions by reference to the PROPOSAL §12 table, with measured figures from the approval (R-6, R-12) and additional direction (cost index, Survey123 note)
+   - No new wording: rulings text is from the approval file, organized for readability
+6. Verified the file format matches the template and README conventions.
+7. Ticked B1.19 in PLAN.md.
+
+**Result**: Created `docs/decisions/0101-operator-approval-architecture-2026-10-02.md` recording the
+operator's 2026-10-02 approval of the architecture proposal and all rulings.
+
+**Next run should know**:
+- Task B1.19 complete.
+- The decision file quotes approvals/architecture.md and cites the R-n table in PROPOSAL §12 by reference.
+- No new wording of the rulings was added; the file documents what was approved and ruled.
