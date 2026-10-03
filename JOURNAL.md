@@ -979,3 +979,23 @@ Runner: ended without finishing (exit 0), attempt 2; re-tagged from drudge to li
 ```
 
 ```
+
+## 2026-10-03 B1.18 — done
+
+**What I did**: Ran `scripts/import_adrs.py` to import ADRs 0001–0025 and OWNER_RULINGS from rmi-platform source repository.
+
+- Imported 25 ADRs (0001–0025) from `~/sources/rmi-platform/docs/adr/` into `docs/decisions/NNNN-slug.md`
+- Imported OWNER_RULINGS from `~/sources/rmi-platform/docs/planning/OWNER_RULINGS.md` as `docs/decisions/0100-owner-rulings.md`
+- Each file has front matter with `status`, `kind`, `date`, `refs`, `source_status`, `imported_from`, `imported_on`
+- ADRs 0010, 0016, 0023 already include pointers to ADR 0025 (P-10) in their content
+- Ran `check_decisions.py` and `make check`: all 150 tests pass, decision checker passes
+- Committed 26 files (25 ADRs + 1 OWNER_RULINGS file) to docs/decisions/ with message
+
+**Result**: docs/decisions/ now contains the decision history needed for the rebuild. The PARITY P-10
+requirement (the three pointer edits) is satisfied: the imported ADRs 0010, 0016, 0023 already contain
+references to ADR 0025 in the source repository.
+
+**Next run should know**:
+- All 150 tests continue to pass
+- `make check` is green for the next phase
+
