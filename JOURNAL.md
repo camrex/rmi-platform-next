@@ -805,3 +805,29 @@ Runner: ended without finishing (exit 0), attempt 2; re-tagged from coder to sta
 ```
 
 ```
+
+## 2026-10-03 B1.13 — done
+
+**What I did**: regenerated `modules/hello/` and `modules/hello_friend/` with `scripts/new_module.py` (the
+earlier runs left half-edited copies and no `pyproject.toml`, which broke `uv sync`), then filled them in.
+`make check` green (120 tests); `rmi describe` lists both, `hello.greeting` with its schema, consumer
+`hello_friend` (uses, satisfied).
+- Seam contract: `contracts/hello_greeting/v1.py` (`Greeting` DTO, `GreetingV1` Protocol; plus `__init__.py`).
+  Path is the one `describe` expects (`contracts.hello_greeting.v1`); isolation allows `contracts/hello_*`.
+- `hello`: `manifest.py` (`manifest = ModuleManifest(...)`, one `Nav`, `SeamImpl("hello.greeting","1.0",Greeter())`),
+  `seams.py`, `web.py` (one page at `/hello`), tests. `hello_friend`: `uses=[SeamRef("hello.greeting",">=1,<2")]`,
+  page works with and without a provider (tests cover both).
+- Each module has a `pyproject.toml` with the `rmi.modules` entry point (`hello = "modules.hello.manifest:manifest"`).
+  The first edit of `uv.lock` for the two members is unavoidable and is not module-folder content.
+
+**Found, for the next runs**:
+- **The template is stale**: `modules/_template/` still has the dict `MANIFEST`, no `pyproject.toml`, no
+  `ModuleManifest`; `new_module.py` output needs hand-rewriting (I deleted `pages/` and `tests/test_example.py`).
+  B1.14 says "add it to the template"; the template should be brought up to the `hello` shape then (or in B1.12 follow-up).
+  Also, `new_module.py` replaces `{{...}}` only in `.py`/`.md`, so a template `pyproject.toml` would need `.toml` added.
+- **No seam registry in core yet** (`seams.get(Contract)`): `hello_friend/seams.py::greeting_provider` returns `None`
+  (a FastAPI dependency) until it exists; tests override it. B1.14's with/without-provider test will need the registry or an override hook.
+- **`make check`'s `uv sync` drops the modules** from `.venv` (workspace root has `package = false`, so only `rmi-core` is
+  installed); `uv sync --all-packages` installs them. Outside this task's folders, so added as B1.13b.
+- Modules import as `modules.<key>` (namespace package from the repo root, `pythonpath = ["."]`); the entry point targets
+  that name, so the editable install of a module needs the repo root on the path (`dev-mode-dirs = ["../.."]` in its pyproject).

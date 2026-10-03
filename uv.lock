@@ -5,6 +5,8 @@ requires-python = "==3.12.*"
 [manifest]
 members = [
     "rmi-core",
+    "rmi-module-hello",
+    "rmi-module-hello-friend",
     "rmi-platform-next",
 ]
 
@@ -385,6 +387,28 @@ requires-dist = [
     { name = "pydantic", specifier = ">=2.0" },
     { name = "sqlalchemy", extras = ["asyncio"], specifier = ">=2.0" },
 ]
+
+[[package]]
+name = "rmi-module-hello"
+version = "0.1.0"
+source = { editable = "modules/hello" }
+dependencies = [
+    { name = "rmi-core" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "rmi-core", editable = "core" }]
+
+[[package]]
+name = "rmi-module-hello-friend"
+version = "0.1.0"
+source = { editable = "modules/hello_friend" }
+dependencies = [
+    { name = "rmi-core" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "rmi-core", editable = "core" }]
 
 [[package]]
 name = "rmi-platform-next"
