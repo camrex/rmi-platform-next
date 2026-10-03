@@ -948,3 +948,18 @@ Runner: ended without finishing (exit 0), attempt 2; re-tagged from coder to sta
 ```
 
 ```
+
+## 2026-10-03 B1.17 — done
+
+`scripts/import_adrs.py [--source DIR] [--dest docs/decisions] [--date D]` (defaults: `~/sources/rmi-platform`, `docs/decisions`, today UTC).
+- `docs/adr/NNNN-slug.md` -> `<dest>/NNNN-slug.md` (ADR keeps its number; README.md skipped). `OWNER_RULINGS.md` -> `0100-owner-rulings.md`
+  (`status: ruled`, `kind: ruling`, `date` = newest `## date` heading).
+- Front matter added, original text follows byte for byte (CRLF kept). `status`: Accepted -> ruled, Proposed -> open, Superseded -> superseded;
+  `date` = first date on the Status line; `kind: architecture`; `refs: []`. Extra keys: `source_status` (original line, JSON-quoted),
+  `imported_from` (`rmi-platform/docs/adr/...`), `imported_on`. `check_decisions.py` accepts the extras.
+- Idempotent (overwrites). An ADR with no/unknown Status line or existing front matter is reported as PROBLEM and skipped; exit 1.
+- `tests/scripts/test_import_adrs.py`: 8 tests on a temp fixture. `make check` green (150 tests).
+- Dry run against the real source into /tmp: 26 files (25 ADRs + rulings), no problems, all pass `check_decisions.py`. Nothing written to `docs/decisions/` (that is B1.18).
+
+**Next run (B1.18)**: run `uv run python scripts/import_adrs.py`, then `make check-decisions`, commit `docs/decisions/`. The `Superseded by` ADR (0007) maps to `superseded`;
+ADR 0017 is still Proposed upstream -> `open`. `refs` are empty (cross-references stay in the body).
