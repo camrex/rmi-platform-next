@@ -60,6 +60,8 @@ async def test_something(db_session: AsyncSession) -> None:
 
 ## CI
 
-`.github/workflows/ci.yml` has no PostgreSQL service yet, so database tests skip there. When CI
-gets one, set `RMI_TEST_ADMIN_DSN` and `RMI_REQUIRE_DB=1` in the workflow (a follow-up for the
-operator or B1.15, which needs the same server).
+`.github/workflows/ci.yml` runs `make check` on every push and pull request to `main`. It includes
+a `postgres:18` service (user `rebuild`, database `rmi`, trust auth, port 5432) with health checks.
+The environment variables `RMI_TEST_ADMIN_DSN=postgresql://rebuild@localhost:5432/rmi` and
+`RMI_REQUIRE_DB=1` are set in the job, so database tests and `check-migrations` run and fail the
+build if the database or migrations are broken. The service blocks the workflow until it is ready.

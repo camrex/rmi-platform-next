@@ -1142,3 +1142,43 @@ Phase B1 review against PROPOSAL §3 and §5 -> `docs/reviews/B1.md`.
 ## 2026-10-03 B1.22 — done
 
 Updated Ref.parse in core/src/rmi_core/refs.py to strictly validate schemes and dataset/identifier presence. Added corresponding validation tests in core/tests/test_refs.py.
+
+## 2026-10-03 B1.23 — done
+
+**Task**: CI database: in `.github/workflows/ci.yml` add a `postgres:18` service (user `rebuild`, db `rmi`, trust auth, port 5432) and env `RMI_TEST_ADMIN_DSN=postgresql://rebuild@localhost:5432/rmi`, `RMI_REQUIRE_DB=1`, so DB tests and `check-migrations` run instead of skipping; check that `tests/harness/db.py` and `scripts/check_migrations.py` honour `RMI_TEST_ADMIN_DSN`; update the "CI" section of docs/TESTING.md.
+
+**What I did**:
+1. Read MISSION.md, AGENTS.md, PLAN.md, and JOURNAL.md to understand the context and task.
+2. Examined `.github/workflows/ci.yml`: it had no PostgreSQL service yet, only the check step.
+3. Examined `tests/harness/db.py` and `scripts/check_migrations.py`:
+   - `db.py` defines `ADMIN_DSN_ENV = "RMI_TEST_ADMIN_DSN"` and `REQUIRE_DB_ENV = "RMI_REQUIRE_DB"`.
+   - `admin_url()` reads `os.environ.get(ADMIN_DSN_ENV, DEFAULT_ADMIN_DSN)`.
+   - `check_migrations.py` checks `os.environ.get(db.REQUIRE_DB_ENV) == "1"` to decide whether to fail on missing database.
+   - Both files already honour the environment variables as the task required.
+4. Updated `.github/workflows/ci.yml`:
+   - Added a `services.postgres` block with `image: postgres:18`.
+   - Set `POSTGRES_USER: rebuild`, `POSTGRES_DB: rmi`, `POSTGRES_HOST_AUTH_METHOD: trust`.
+   - Added health checks (`pg_isready`, 10s interval, 5s timeout, 5 retries).
+   - Mapped port 5432:5432 so the container is reachable at `localhost:5432` from the job.
+   - Added `env:` block at job level with `RMI_TEST_ADMIN_DSN=postgresql://rebuild@localhost:5432/rmi` and `RMI_REQUIRE_DB: "1"`.
+5. Updated `docs/TESTING.md` "CI" section:
+   - Changed from "no PostgreSQL service yet, so database tests skip" to "runs `make check` with postgres:18 service (user `rebuild`, database `rmi`, trust auth, port 5432) with health checks".
+   - Documented that `RMI_TEST_ADMIN_DSN` and `RMI_REQUIRE_DB=1` are set, so database tests and `check-migrations` run and fail the build if broken.
+   - Noted that the service blocks the workflow until it is ready.
+6. Verified the workflow YAML syntax with `python3 -c "import yaml; yaml.safe_load(...)"`.
+7. Ran `make check` from the project root to confirm all tests still pass (152 tests passed, all checks green).
+
+**Result**:
+- `.github/workflows/ci.yml`: Added `postgres:18` service with health checks, environment variables for DSN and require-db flag.
+- `docs/TESTING.md`: Updated the CI section to document the new service and environment variables.
+- Both `tests/harness/db.py` and `scripts/check_migrations.py` already honour the environment variables (verified by grep).
+
+**What I found**:
+- The environment variables were already being read correctly in both `db.py` (in `admin_url()`) and `check_migrations.py` (in `run()` function), so no code changes were needed.
+- The CI workflow had only the basic GitHub Actions setup; adding the service was straightforward.
+- The documentation had a placeholder comment saying when the service would be added; it is now filled in.
+
+**Next run should know**:
+- B1.23 complete; CI now runs database tests.
+- First push to GitHub after this commit will be the real test (ci.yml has probably never run on GitHub before, per B1.21 review).
+- The next unticked task is B1.24 (migration chain convention).
