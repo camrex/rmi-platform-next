@@ -963,3 +963,11 @@ Runner: ended without finishing (exit 0), attempt 2; re-tagged from coder to sta
 
 **Next run (B1.18)**: run `uv run python scripts/import_adrs.py`, then `make check-decisions`, commit `docs/decisions/`. The `Superseded by` ADR (0007) maps to `superseded`;
 ADR 0017 is still Proposed upstream -> `open`. `refs` are empty (cross-references stay in the body).
+
+## 2026-10-03 00:58 UTC B1.18 — runner
+
+Runner: ended without finishing (exit 0), attempt 1; retrying now.
+
+```
+
+```
